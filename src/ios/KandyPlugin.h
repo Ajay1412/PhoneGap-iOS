@@ -1,0 +1,104 @@
+//
+//  KandyPlugin.h
+//  KandyPlugin
+//
+//  Created by Srinivasan Baskaran on 2/6/15.
+//
+//
+
+#import <UIKit/UIKit.h>
+#import <Cordova/CDV.h>
+
+@interface KandyPlugin : CDVPlugin
+
+//New set-up
+- (void) connectServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
+- (void) callServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
+- (void) addressBookServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
+- (void) chatServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
+- (void) groupServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
+- (void) chatServiceNotificationPluginCallback:(CDVInvokedUrlCommand *)command;
+
+//Plugin methods
+
+//Provisioning
+- (void) request:(CDVInvokedUrlCommand *)command;
+- (void) validate:(CDVInvokedUrlCommand *)command;
+- (void) deactivate:(CDVInvokedUrlCommand *)command;
+
+//Login
+- (void) login:(CDVInvokedUrlCommand *)command;
+- (void) logout:(CDVInvokedUrlCommand *)command;
+- (void) getConnectionState:(CDVInvokedUrlCommand *)command;
+- (void) getSession:(CDVInvokedUrlCommand *)command;
+
+//Call
+- (void) createVoipCall:(CDVInvokedUrlCommand *)command;
+- (void) createPSTNCall:(CDVInvokedUrlCommand *)command;
+- (void) hangupCall:(CDVInvokedUrlCommand *)command;
+- (void) muteCall:(CDVInvokedUrlCommand *)command;
+- (void) UnMuteCall:(CDVInvokedUrlCommand *)command;
+- (void) holdCall:(CDVInvokedUrlCommand *)command;
+- (void) unHoldCall:(CDVInvokedUrlCommand *)command;
+- (void) enableVideo:(CDVInvokedUrlCommand *)command;
+- (void) disableVideo:(CDVInvokedUrlCommand *)command;
+- (void) acceptCall:(CDVInvokedUrlCommand *)command;
+- (void) rejectCall:(CDVInvokedUrlCommand *)command;
+- (void) ignoreCall:(CDVInvokedUrlCommand *)command;
+
+//Chat
+- (void) sendChat:(CDVInvokedUrlCommand *)command;
+- (void) sendSMS:(CDVInvokedUrlCommand *)command;
+- (void) pickAudio:(CDVInvokedUrlCommand *)command;
+- (void) sendAudio:(CDVInvokedUrlCommand *)command;
+- (void) pickVideo:(CDVInvokedUrlCommand *)command;
+- (void) sendVideo:(CDVInvokedUrlCommand *)command;
+- (void) pickImage:(CDVInvokedUrlCommand *)command;
+- (void) sendImage:(CDVInvokedUrlCommand *)command;
+- (void) pickFile:(CDVInvokedUrlCommand *)command;
+- (void) sendFile:(CDVInvokedUrlCommand *)command;
+- (void) pickContact:(CDVInvokedUrlCommand *)command;
+- (void) sendContact:(CDVInvokedUrlCommand *)command;
+- (void) sendCurrentLocation:(CDVInvokedUrlCommand *)command;
+- (void) sendLocation:(CDVInvokedUrlCommand *)command;
+- (void) cancelMediaTransfer:(CDVInvokedUrlCommand *)command;
+- (void) downloadMedia:(CDVInvokedUrlCommand *)command;
+- (void) downloadMediaThumbnail:(CDVInvokedUrlCommand *)command;
+- (void) markAsReceived:(CDVInvokedUrlCommand *)command;
+- (void) pullEvents:(CDVInvokedUrlCommand *)command;
+
+//Group
+- (void) createGroup:(CDVInvokedUrlCommand *)command;
+- (void) getMyGroups:(CDVInvokedUrlCommand *)command;
+- (void) getGroupById:(CDVInvokedUrlCommand *)command;
+- (void) updateGroupName:(CDVInvokedUrlCommand *)command;
+- (void) updateGroupImage:(CDVInvokedUrlCommand *)command;
+- (void) removeGroupImage:(CDVInvokedUrlCommand *)command;
+- (void) downloadGroupImage:(CDVInvokedUrlCommand *)command;
+- (void) downloadGroupImageThumbnail:(CDVInvokedUrlCommand *)command;
+- (void) muteGroup:(CDVInvokedUrlCommand *)command;
+- (void) unmuteGroup:(CDVInvokedUrlCommand *)command;
+- (void) destroyGroup:(CDVInvokedUrlCommand *)command;
+- (void) leaveGroup:(CDVInvokedUrlCommand *)command;
+- (void) removeParticipants:(CDVInvokedUrlCommand *)command;
+- (void) muteParticipants:(CDVInvokedUrlCommand *)command;
+- (void) unmuteParticipants:(CDVInvokedUrlCommand *)command;
+- (void) addParticipants:(CDVInvokedUrlCommand *)command;
+
+//Presence
+- (void) presence:(CDVInvokedUrlCommand *)command;
+
+//Location
+- (void) getCountryInfo:(CDVInvokedUrlCommand *)command;
+- (void) getCurrentLocation:(CDVInvokedUrlCommand *)command;
+
+//Push
+- (void) pushEnable:(CDVInvokedUrlCommand *)command;
+- (void) pushDisable:(CDVInvokedUrlCommand *)command;
+
+//AddressBook
+- (void) getDeviceContacts:(CDVInvokedUrlCommand *)command;
+- (void) getDomainContacts:(CDVInvokedUrlCommand *)command;
+- (void) getFilteredDomainDirectoryContacts:(CDVInvokedUrlCommand *)command;
+
+@end

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied.  See the License for the
+  specific language governing permissions and limitations
+  under the License.
+-->
+
+<plugin xmlns:rim="http://www.blackberry.com/ns/widgets"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        id="com.kandy.phonegap"
+        version="0.0.1">
+    <name>KandyPlugin</name>
+    <description>Kandy PhoneGap plugin</description>
+    <license>Apache 2.0</license>
+    <keywords>kandy, phonegap, cordova, plugin, video, call, chat, presence, location, address book</keywords>
+    <repo>https://github.com/kodeplusdev/kandyphonegap.git</repo>
+    <issue>https://github.com/kodeplusdev/kandyphonegap/issues</issue>
+
+    <preference name="API_KEY"/>
+    <preference name="API_SECRET"/>
+
+    <js-module src="www/kandy.js" name="KandyPlugin">
+        <clobbers target="Kandy"/>
+    </js-module>
+
+    <!-- android -->
+    <platform name="android">
+
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="KandyPlugin">
+                <param name="android-package" value="com.kandy.phonegap.KandyPlugin"/>
+            </feature>
+        </config-file>
+
+        <source-file src="src/android/kandy_strings.xml" target-dir="res/values"/>
+
+        <source-file src="src/android/kandy_configs.xml" target-dir="res/values"/>
+
+        <config-file target="res/values/kandy_configs.xml" parent="/*">
+            <string name="kandy_api_key">$API_KEY</string>
+            <string name="kandy_api_secret">$API_SECRET</string>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+            <uses-feature android:name="android.hardware.camera" />
+            <uses-feature android:name="android.hardware.camera.autofocus" />
+
+            <permission android:name=".permission.C2D_MESSAGE" android:protectionLevel="signature" />
+            <uses-permission android:name=".permission.C2D_MESSAGE" />
+            <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+            <uses-permission android:name="android.permission.WAKE_LOCK" />
+            <uses-permission android:name="android.permission.INTERNET" />
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+            <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+            <uses-permission android:name="android.permission.CAMERA" />
+            <uses-permission android:name="android.permission.RECORD_AUDIO" />
+            <uses-permission android:name="android.permission.READ_CONTACTS" />
+            <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+            <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="application">
+            <service android:enabled="true" android:name="com.genband.mobile.core.NotificationEngine.NotificationAndroidService" />
+            <service android:enabled="true" android:name="com.genband.mobile.impl.services.registration.GeneralRenewalAndroidService" />
+            <receiver
+                    android:name="com.kandy.phonegap.push.KandyPushReceiver"
+                    android:permission="com.google.android.c2dm.permission.SEND" >
+                <intent-filter>
+                    <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                    <action android:name="com.google.android.c2dm.intent.REGISTRATION" />
+
+                    <category android:name="com.kandy.phonegap" />
+                </intent-filter>
+            </receiver>
+            <service android:name="com.kandy.phonegap.push.KandyPushService" android:enabled="true" />
+        </config-file>
+
+        <source-file src="www/kandy.css" target-dir="assets/www/plugins/com.kandy.phonegap/www/css"/>
+        <source-file src="src/android/kandy_call_dialog.xml" target-dir="res/layout"/>
+        <source-file src="src/android/KandyPlugin.java" target-dir="src/com/kandy/phonegap"/>
+        <source-file src="src/android/KandyUtils.java" target-dir="src/com/kandy/phonegap"/>
+        <source-file src="src/android/KandyConstant.java" target-dir="src/com/kandy/phonegap"/>
+        <source-file src="src/android/push/KandyPushReceiver.java" target-dir="src/com/kandy/phonegap/push"/>
+        <source-file src="src/android/push/KandyPushService.java" target-dir="src/com/kandy/phonegap/push"/>
+        <source-file src="src/android/KandyCallDialog.java" target-dir="src/com/kandy/phonegap"/>
+        <source-file src="libs/android/kandysdk_PRODUCTION_1.4.107.jar" target-dir="libs"/>
+        <source-file src="libs/android/armeabi/libjingle_peerconnection_so.so" target-dir="libs/armeabi"/>
+    </platform>
+
+    <!-- iOS -->
+
+  <platform name="ios">
+    <config-file target="config.xml" parent="/*">
+        <feature name="KandyPlugin">
+            <param name="ios-package" value="KandyPlugin"/>
+            <param name="onload" value="true" />
+        </feature>
+        <plugin name="KandyPlugin" value="KandyPlugin"/>
+        <access origin="https://api.kandy.io/v1.1/" />
+    </config-file>
+
+    <header-file src="src/ios/KandyPlugin.h" />
+    <source-file src="src/ios/KandyPlugin.m" />
+    <header-file src="src/ios/CallViewController.h" />
+    <source-file src="src/ios/CallViewController.m" />
+    <resource-file src="src/ios/CallView.xib" />
+
+    <config-file target="*-Info.plist" parent="PROJECT_API_KEY">
+        <string>$API_KEY</string>
+    </config-file>
+
+    <config-file target="*-Info.plist" parent="PROJECT_API_SECRET">
+        <string>$API_SECRET</string>
+    </config-file>
+
+    <!-- Kandy framework -->
+    <framework src="libs/ios/KandySDK.framework" custom="true" />
+    <framework src="libs/ios/MobileSDK.framework" custom="true" />
+
+    <!-- System frameworks -->
+    <framework src="CoreTelephony.framework" />
+    <framework src="GLKit.framework" />
+    <framework src="libstdc++.6.dylib" />
+    <framework src="libicucore.dylib" />
+    <framework src="CoreMedia.framework" />
+    <framework src="AudioToolbox.framework" />
+    <framework src="libsqlite3.dylib" />
+    <framework src="SystemConfiguration.framework" />
+    <framework src="AVFoundation.framework" />
+    <framework src="AddressBook.framework" />
+    <framework src="ImageIO.framework" />
+    <framework src="MobileCoreServices.framework" />
+    <framework src="Libc++.dylib" />
+    <framework src="CoreLocation.framework" />
+  </platform>
+
+
+</plugin>
