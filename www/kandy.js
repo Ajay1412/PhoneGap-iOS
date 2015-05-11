@@ -618,14 +618,7 @@ var Kandy = {
                     startWithVideo = document.getElementById(id + '-start-with-video').checked == true ? 1 : 0;
 
                 Kandy.call.createVoipCall(function (s) {
-                        //Kandy._callSuccessFunction(element, "call", s, Kandy._defaultSuccessAction);
-                        alert('Sucess');
-                        //Remote Video
-                        Kandy.call.showRemoteVideo(function (s) {}, function (e) {}, 10, 100, 320, 200);
-
-                        //Local Video
-                        Kandy.call.showLocalVideo(function (s) {}, function (e) {}, 10, 310, 100, 100);
-
+                        Kandy._callSuccessFunction(element, "call", s, Kandy._defaultSuccessAction);
                     }, function (e) {
                         Kandy._callErrorFunction(element, "call", e, Kandy._defaultErrorAction);
                     }, username, startWithVideo
