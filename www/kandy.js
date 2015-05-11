@@ -896,58 +896,53 @@ var Kandy = {
     //*** CALL SERVICE ***//
     call: {
 
-
       /**
-              * Show Local Video in given Dimension.
-              *
-              * @param success The success callback function.
-              * @param error The error callback function.
-              * @param xpos The co-ordinate of X position.
-              * @param ypos The co-ordinate of Y position.
-              * @param width The width of of Video that needs to show.
-              * @param width The height of of Video that needs to show
-              */
-             showLocalVideo: function (success, error, x, y, width, height) {
-                 exec(success, error, "KandyPlugin", "showLocalVideo", [x, y, width, height]);
-             },
+          * Show Local Video in given Dimension.
+          *
+          * @param success The success callback function.
+          * @param error The error callback function.
+          * @param xpos The co-ordinate of X position.
+          * @param ypos The co-ordinate of Y position.
+          * @param width The width of of Video that needs to show.
+          * @param width The height of of Video that needs to show
+          */
+         showLocalVideo: function (success, error, x, y, width, height) {
+             exec(success, error, "KandyPlugin", "showLocalVideo", [x, y, width, height]);
+         },
 
-             /**
-              * Show Remote Video in given Dimension.
-              *
-              * @param success The success callback function.
-              * @param error The error callback function.
-              * @param xpos The co-ordinate of X position.
-              * @param ypos The co-ordinate of Y position.
-              * @param width The width of of Video that needs to show.
-              * @param width The height of of Video that needs to show
-              */
-             showRemoteVideo: function (success, error, x, y, width, height) {
-                 exec(success, error, "KandyPlugin", "showRemoteVideo", [x, y, width, height]);
-             },
+         /**
+          * Show Remote Video in given Dimension.
+          *
+          * @param success The success callback function.
+          * @param error The error callback function.
+          * @param xpos The co-ordinate of X position.
+          * @param ypos The co-ordinate of Y position.
+          * @param width The width of of Video that needs to show.
+          * @param width The height of of Video that needs to show
+          */
+         showRemoteVideo: function (success, error, x, y, width, height) {
+             exec(success, error, "KandyPlugin", "showRemoteVideo", [x, y, width, height]);
+         },
 
-             /**
-              * Hide Local Video.
-              *
-              * @param success The success callback function.
-              * @param error The error callback function.
-              */
-              hideLocalVideo: function (success, error, user, startWithVideo) {
-                 startWithVideo = startWithVideo ? 1 : 0;
-                 exec(success, error, "KandyPlugin", "hideLocalVideo", [user, startWithVideo]);
-             },
+         /**
+          * Hide Local Video.
+          *
+          * @param success The success callback function.
+          * @param error The error callback function.
+          */
+          hideLocalVideo: function (success, error, user, startWithVideo) {
+             exec(success, error, "KandyPlugin", "hideLocalVideo", []);
+         },
 
-             /**
-              * Hide Local Video.
-              *
-              * @param success The success callback function.
-              * @param error The error callback function.
-              */
-              hideRemoteVideo: function (success, error, user, startWithVideo) {
-                 startWithVideo = startWithVideo ? 1 : 0;
-                 exec(success, error, "KandyPlugin", "hideRemoteVideo", [user, startWithVideo]);
-             },
-
-
+         /**
+          * Hide Local Video.
+          *
+          * @param success The success callback function.
+          * @param error The error callback function.
+          */
+          hideRemoteVideo: function (success, error, user, startWithVideo) {
+             exec(success, error, "KandyPlugin", "hideRemoteVideo", []);
+         },
 
         /**
          * Create a voip call.

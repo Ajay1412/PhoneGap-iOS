@@ -23,6 +23,6 @@ MobileSDK.framework
 
 To get above Kandy native frameworks, 
 
-Step1. Download Kandy iOS SDK from http://gb-kandy-portal-shared.s3.amazonaws.com/downloads/iOSKandySDK_1.3.1.zip
+Step1. Download Kandy iOS SDK from http://gb-kandy-portal-shared.s3.amazonaws.com/downloads/iOSKandySDK_1.4.0.zip
 Step2. Extract it and you can find the both frameworks
 Step3. Place into this folder then add plugin into your project.
