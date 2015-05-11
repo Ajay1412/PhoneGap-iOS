@@ -11,7 +11,11 @@
 
 @interface KandyPlugin : CDVPlugin
 
-//New set-up
+//configurations
+- (void) configurations:(CDVInvokedUrlCommand *)command;
+- (void) makeToast:(CDVInvokedUrlCommand *)command;
+
+//Callback set-up
 - (void) connectServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
 - (void) callServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
 - (void) addressBookServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
@@ -34,17 +38,21 @@
 
 //Call
 - (void) createVoipCall:(CDVInvokedUrlCommand *)command;
+- (void) showLocalVideo:(CDVInvokedUrlCommand *)command;
+- (void) hideLocalVideo;
+- (void) showRemoteVideo:(CDVInvokedUrlCommand *)command;
+- (void) hideRemoteVideo;
 - (void) createPSTNCall:(CDVInvokedUrlCommand *)command;
-- (void) hangupCall:(CDVInvokedUrlCommand *)command;
-- (void) muteCall:(CDVInvokedUrlCommand *)command;
-- (void) UnMuteCall:(CDVInvokedUrlCommand *)command;
-- (void) holdCall:(CDVInvokedUrlCommand *)command;
-- (void) unHoldCall:(CDVInvokedUrlCommand *)command;
+- (void) hangup:(CDVInvokedUrlCommand *)command;
+- (void) mute:(CDVInvokedUrlCommand *)command;
+- (void) UnMute:(CDVInvokedUrlCommand *)command;
+- (void) hold:(CDVInvokedUrlCommand *)command;
+- (void) unHold:(CDVInvokedUrlCommand *)command;
 - (void) enableVideo:(CDVInvokedUrlCommand *)command;
 - (void) disableVideo:(CDVInvokedUrlCommand *)command;
-- (void) acceptCall:(CDVInvokedUrlCommand *)command;
-- (void) rejectCall:(CDVInvokedUrlCommand *)command;
-- (void) ignoreCall:(CDVInvokedUrlCommand *)command;
+- (void) accept:(CDVInvokedUrlCommand *)command;
+- (void) reject:(CDVInvokedUrlCommand *)command;
+- (void) ignore:(CDVInvokedUrlCommand *)command;
 
 //Chat
 - (void) sendChat:(CDVInvokedUrlCommand *)command;

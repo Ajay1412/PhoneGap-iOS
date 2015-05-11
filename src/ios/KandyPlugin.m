@@ -51,18 +51,36 @@ static NSString *kandy_calls_remote_video_label = @"Remote video";
 static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient\'s number (recipientID@domain.com)";
 
 @interface KandyPlugin() <KandyCallServiceNotificationDelegate, KandyChatServiceNotificationDelegate, KandyContactsServiceNotificationDelegate, KandyAccessNotificationDelegate,  UIActionSheetDelegate>
-@property (nonatomic) NSString *callbackID;
 
-// The current call
+/**
+ * Kandy response listeners *
+ */
+@property (nonatomic) NSString *callbackID;
+@property (nonatomic) UIView *viewRemoteVideo;
+@property (nonatomic) UIView *viewLocalVideo;
+
+/**
+ * Kandy Plugin configuration properties *
+ */
+
+@property (nonatomic) NSString *startWithVideo;
+@property (nonatomic) NSString *downloadPath;
+@property (assign) int mediaSizePicker;
+@property (nonatomic) NSString *downloadPolicy;
+@property (assign) int downloadThumbnailSize;
+@property (nonatomic) NSString *kandyHostUrl;
+@property (nonatomic) NSString *showNativeVideoPage;
+
+/**
+ * Kandy incoming and out going delegate to set
+ */
 @property (assign) id <KandyOutgoingCallProtocol> kandyOutgoingCall;
 @property (nonatomic, strong) id <KandyIncomingCallProtocol> kandyIncomingCall;
 
-/** Callback **/
 
-// CallbackContext for current execute
-@property (nonatomic) NSString *_callbackContext;
-
-//Incoming call
+/**
+ * The Incoming options action sheet for Kandy *
+ */
 @property (nonatomic) UIActionSheet * incomingCallOPtions;
 
 
@@ -98,7 +116,9 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
 @property (assign) BOOL startVideoCall;
 
 // The call dialog (native)
-@property (assign) BOOL isUsingNativeDialog;
+@property (assign) BOOL hasNativeCallView;
+
+@property (nonatomic) NSArray *connectionState;
 
 @end
 
@@ -115,9 +135,18 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
     
     NSString *apikey = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"PROJECT_API_KEY"];
     NSString *apisecret = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"PROJECT_API_SECRET"];
-    [Kandy initializeWithDomainKey:apikey domainSecret:apisecret];
-
+    if (apikey && apisecret) {
+        NSLog(@"wow.....Getting the values");
+        [Kandy initializeSDKWithDomainKey:apikey domainSecret:apisecret];
+    }
+    else {
+        NSLog(@"Not getting the values");
+        [Kandy initializeSDKWithDomainKey:@"DAK525fffbaa0414f3f98a5dc482472006a" domainSecret:@"DASac5063f90ca64d22ac987e82e006733f"];
+    }
     self.startVideoCall = YES;
+    
+    self.connectionState = @[@"DISCONNECTING", @"DISCONNECTED", @"CONNECTING", @"CONNECTED"];
+    
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveRemoteNotification:) name:CDVRemoteNotification object:nil];
 }
 
@@ -136,348 +165,25 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
     [[Kandy sharedInstance].services.contacts unregisterNotifications:self];
 }
 
-#pragma mark - Delegate
-
-/**
- * The listeners for callback
- */
-
-#pragma mark - KandyConnectServiceNotificationDelegate
-
--(void) connectionStatusChanged:(EKandyConnectionState)connectionStatus{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
-                             @"onConnectionStateChanged",@"action",
-                             @(connectionStatus), @"state",
-                             nil
-                             ];
-    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyConnectServiceNotificationCallback];
-}
-
--(void) gotInvalidUser:(NSError*)error{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
-                             @"onInvalidUser",@"action",
-                             error, @"error",
-                             nil
-                             ];
-    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyConnectServiceNotificationCallback];
-}
-#pragma mark - KandyCallServiceNotificationDelegate
-
-/**
- *
- * @param call
- */
--(void) gotIncomingCall:(id<KandyIncomingCallProtocol>)call{
-    self.kandyIncomingCall = call;
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
-                             @"onIncomingCall",@"action",
-                             call.callId,@"id",
-                             call.callee.uri, @"callee",
-                             nil
-                             ];
-    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
-    
-    //TODO: Need to check whether need thread
-    [self answerIncomingCall];
-}
-
-/**
- *
- * @param state
- * @param call
- */
--(void) stateChanged:(EKandyCallState)callState forCall:(id<KandyCallProtocol>)call{
-    
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
-                             @"onCallStateChanged",@"action",
-                             call.callId,@"id",
-                             call.callee.uri, @"callee",
-                             @(callState), @"state",
-                             nil
-                             ];
-    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
-
-    [self.incomingCallOPtions dismissWithClickedButtonIndex:3 animated:YES];
-}
-
-/**
- *
- * @param iKandyCall
- * @param isReceivingVideo
- * @param isSendingVideo
- */
--(void) videoStateChangedForCall:(id<KandyCallProtocol>)call{
-        NSDictionary *jsonObj = [[NSDictionary alloc]
-                                 initWithObjectsAndKeys:
-                                 @"onVideoStateChanged",@"action",
-                                 call.callId,@"id",
-                                 call.callee.uri, @"callee",
-                                 @(call.isReceivingVideo),@"isReceivingVideo",
-                                 @(call.isSendingVideo), @"isSendingVideo",
-                                 nil
-                                 ];
-        [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
-}
-
-/**
- *
- * @param call
- * @param onMute
- */
--(void) audioRouteChanged:(EKandyCallAudioRoute)audioRoute forCall:(id<KandyCallProtocol>)call{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
-                             @"onVideoStateChanged",@"action",
-                             call.callId,@"id",
-                             call.callee.uri, @"callee",
-                             @(call.isMute), @"isMute",
-                             nil
-                             ];
-    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
-}
--(void) gotMissedCall:(id<KandyCallProtocol>)call{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
-                             @"onMissedCall",@"action",
-                             call.callId,@"id",
-                             call.callee.uri, @"callee",
-                             nil
-                             ];
-    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
-}
--(void) participantsChanged:(NSArray*)participants forCall:(id<KandyCallProtocol>)call{
-}
--(void) videoCallImageOrientationChanged:(EKandyVideoCallImageOrientation)newImageOrientation forCall:(id<KandyCallProtocol>)call{
-}
-/**
- *
- * @param call
- */
--(void) GSMCallIncoming{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
-                             @"onGSMCallIncoming",@"action",
-                             nil
-                             ];
-    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
-}
-
--(void) GSMCallDialing{
-}
--(void) GSMCallConnected{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
-                             @"onGSMCallConnected",@"action",
-                             nil
-                             ];
-    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
-}
--(void) GSMCallDisconnected{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
-                             @"onGSMCallDisconnected",@"action",
-                             nil
-                             ];
-    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
-}
-
-#pragma mark - KandyChatServiceNotificationDelegate
-
-
--(void)onMessageReceived:(id<KandyMessageProtocol>)kandyMessage
-{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
-                             @"onChatReceived",@"action",
-                             kandyMessage.uuid,@"UUID",
-                             kandyMessage.sender.uri, @"sender",
-                             kandyMessage.mediaItem.text , @"message",
-                             kandyMessage.timestamp , @"timestamp",
-                             nil
-                             ];
-    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
-    
-}
--(void)onMessageDelivered:(KandyDeliveryAck *)ackData {
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
-                             @"onChatDelivered",@"action",
-                             ackData.uuid,@"UUID",
-                             ackData.timestamp , @"timestamp",
-                             nil
-                             ];
-    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
-}
-
--(void) onAutoDownloadProgress:(KandyTransferProgress*)transferProgress kandyMessage:(id<KandyMessageProtocol>)kandyMessage {
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
-                             @"onChatMediaAutoDownloadProgress",@"action",
-                             kandyMessage.uuid,@"UUID",
-                             kandyMessage.timestamp , @"timestamp",
-                             transferProgress.transferProgressPercentage, @"process",
-                             transferProgress.transferState, @"state",
-                             transferProgress.transferredSize, @"byteTransfer",
-                             transferProgress.expectedSize, @"byteExpected",
-                             nil
-                             ];
-    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
-}
-
--(void) onAutoDownloadFinished:(NSError*)error fileAbsolutePath:(NSString*)path kandyMessage:(id<KandyMessageProtocol>)kandyMessage {
-    NSDictionary *jsonObj;
-    if(error)
-    {
-        jsonObj = [[NSDictionary alloc]
-                                 initWithObjectsAndKeys:
-                                 @"onChatMediaAutoDownloadFailed",@"action",
-                                 error.description,@"error",
-                                 error.code,@"code",
-                                 nil
-                                 ];
-    } else {
-        jsonObj = [[NSDictionary alloc]
-                                 initWithObjectsAndKeys:
-                                 @"onChatMediaAutoDownloadSucceded",@"action",
-                                 kandyMessage.recipient.uri,@"uri",
-                                 nil
-                                 ];
-    }
-    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
-}
-
-#pragma mark - KandyContactsServiceNotificationDelegate
-
--(void)onDeviceContactsChanged {
-    [self notifySuccessResponse:nil withCallbackID:self.kandyAddressBookServiceNotificationCallback];
-}
-
-#pragma mark - UIActionSheetDelegate
-- (void)actionSheet:(UIActionSheet *)popup clickedButtonAtIndex:(NSInteger)buttonIndex {
-    switch (buttonIndex) {
-        case 0:
-            [self doAcceptCallWithVideo:YES];
-            break;
-        case 1:
-            [self doAcceptCallWithVideo:NO];
-            break;
-        case 2:
-            [self doRejectCall];
-            break;
-        case 3:
-            [self doIgnoreCall];
-            break;
-        default:
-            break;
-        }
-}
-
-#pragma mark - Helper methods
-
-- (void) didReceiveRemoteNotification:(NSData *)deviceToken {
-    [[NSUserDefaults standardUserDefaults]setObject:deviceToken forKey:@"deviceToken"];
-}
-
-- (void) notifySuccessResponse:(id)response {
-    [self notifySuccessResponse:response withCallbackID:self.callbackID];
-}
-
-- (void) notifySuccessResponse:(id)response withCallbackID:(NSString *)callbackId {
-    // Create an instance of CDVPluginResult, with an OK status code.
-    CDVPluginResult *pluginResult;
-    if ([response isKindOfClass:[NSDictionary class]]) {
-        pluginResult = [ CDVPluginResult
-                                         resultWithStatus    : CDVCommandStatus_OK
-                                         messageAsDictionary : response
-                                         ];
-    } else {
-        pluginResult = [ CDVPluginResult
-                                        resultWithStatus    : CDVCommandStatus_OK
-                                        messageAsString:response
-                                         ];
-    }
-    // Execute sendPluginResult on this plugin's commandDelegate, passing in the ...
-    // ... instance of CDVPluginResult
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
-}
-
-- (void) notifyFailureResponse:(NSString *)errString {
-    [self notifyFailureResponse:errString withCallbackID:self.callbackID];
-}
-
-- (void) notifyFailureResponse:(NSString *)errString withCallbackID:(NSString *)callbackId {
-    // Create an instance of CDVPluginResult, with an OK status code.
-    // Set the return message as the String object (errString)...
-    CDVPluginResult *pluginResult = [ CDVPluginResult
-                                     resultWithStatus    : CDVCommandStatus_ERROR
-                                     messageAsString:errString
-                                     ];
-    
-    // Execute sendPluginResult on this plugin's commandDelegate, passing in the ...
-    // ... instance of CDVPluginResult
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
-}
-
-- (void) handleRequiredInputError {
-    [self notifyFailureResponse:@"Missing required input parameter" withCallbackID:self.callbackID];
-}
-
-- (void) validateInvokedUrlCommand:(CDVInvokedUrlCommand *)command withRequiredInputs:(int)inputs {
-    self.callbackID = command.callbackId;
-    NSArray *params = command.arguments;
-    if (params && [params count] < 1) {
-        [self handleRequiredInputError];
-        return;
-    }
-}
-
-- (void) answerIncomingCall {
-    self.incomingCallOPtions = [[UIActionSheet alloc] initWithTitle:@"Incoming Call" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Accept With Video", @"Accept Without Video", @"Reject", @"Ignore", nil];
-    UIWindow *window = [[[UIApplication sharedApplication] delegate] window];
-    [self.incomingCallOPtions showInView:window.rootViewController.view];
-}
-
-- (void) initOutgoingCallWithDialog {
-    [self.kandyOutgoingCall establishWithResponseBlock:^(NSError *error) {
-        if (error) {
-            [self didHandleResponse:error];
-        } else {
-            CallViewController *callVC = [[CallViewController alloc] initWithNibName:@"CallView" bundle:nil];
-            callVC.kandyCall = self.kandyOutgoingCall;
-            UIWindow *window = [[[UIApplication sharedApplication] delegate] window];
-            [window.rootViewController presentViewController:callVC animated:YES completion:nil];
-        }
-    }];
-}
-
-- (NSDictionary *) enumerateContactDetails:(NSArray *)kandyContacts {
-    NSMutableDictionary *contacts = [[NSMutableDictionary alloc] init];
-    for (id <KandyContactProtocol> kandyContact in kandyContacts) {
-        NSMutableDictionary *deviceContacts = [[NSMutableDictionary alloc] init];
-        [deviceContacts setValue:kandyContact.displayName forKey:@"displayName"];
-        NSMutableDictionary *deviceEmailContacts = [[NSMutableDictionary alloc] init];
-        for (id <KandyEmailContactRecordProtocol> kandyEmailContactRecord in kandyContact.emails) {
-            [deviceEmailContacts setValue:kandyEmailContactRecord.email forKey:@"address"];
-            [deviceEmailContacts setValue:@(kandyEmailContactRecord.valueType) forKey:@"type"];
-        }
-        [deviceContacts setValue:deviceEmailContacts forKey:@"emails"];
-        NSMutableDictionary *devicePhoneContacts = [[NSMutableDictionary alloc] init];
-        for (id <KandyPhoneContactRecordProtocol> kandyPhoneContactRecord in kandyContact.phones) {
-            [devicePhoneContacts setValue:kandyPhoneContactRecord.phone forKey:@"number"];
-            [devicePhoneContacts setValue:@(kandyPhoneContactRecord.valueType) forKey:@"type"];
-        }
-        [deviceContacts setValue:devicePhoneContacts forKey:@"phones"];
-        [contacts setValue:deviceContacts forKey:@"contacts"];
-    }
-    return contacts;
-}
-
 #pragma mark - Public Plugin Methods
 
+-(void) configurations:(CDVInvokedUrlCommand *)command {
+    NSArray *config = command.arguments;
+    NSLog(@"configurations Variables %@", config);
+    if (config && [config count] > 0) {
+        NSDictionary *configvariables = [config objectAtIndex:0];
+        self.hasNativeCallView = [configvariables objectForKey:@"hasNativeCallView"];
+    }
+}
+
+- (void) makeToast:(CDVInvokedUrlCommand *)command {
+    NSArray *params = command.arguments;
+    [self validateInvokedUrlCommand:command withRequiredInputs:1];
+    [self.commandDelegate runInBackground:^{
+        __block NSString * message = [params objectAtIndex:0];
+        [self showNativeAlert:message];
+    }];
+}
 - (void) connectServiceNotificationCallback:(CDVInvokedUrlCommand *)command {
     self.kandyConnectServiceNotificationCallback = command.callbackId;
 }
@@ -539,18 +245,20 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
 }
 
 - (void) getConnectionState:(CDVInvokedUrlCommand *)command {
-    [self notifySuccessResponse:@([Kandy sharedInstance].access.connectionState) withCallbackID:command.callbackId];
+    [self notifySuccessResponse:[self.connectionState objectAtIndex:[Kandy sharedInstance].access.connectionState] withCallbackID:command.callbackId];
 }
 
 //Session Service
 - (void) getSession:(CDVInvokedUrlCommand *)command {
+
     NSArray *userinfo = [Kandy sharedInstance].sessionManagement.provisionedUsers;
+
     if ([userinfo count] > 0) {
         KandyUserInfo * kandyUserInfo = [userinfo objectAtIndex:0];
         NSDictionary *jsonObj = [ [NSDictionary alloc]
                                  initWithObjectsAndKeys :
-                                 kandyUserInfo.userId, @"userId",
-                                 kandyUserInfo.record.userName, @"user",
+                                 kandyUserInfo.userId, @"id",
+                                 kandyUserInfo.record.userName, @"name",
                                  kandyUserInfo.record.domain, @"domain",
                                  nil
                                  ];
@@ -564,12 +272,48 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
     [self validateInvokedUrlCommand:command withRequiredInputs:2];
     [self.commandDelegate runInBackground:^{
         __block NSString *phone = [params objectAtIndex:0];
-        __block NSString *isVideo = [params objectAtIndex:1];
+        __block BOOL isVideo = [[params objectAtIndex:1] boolValue];
         if (phone && isVideo) {
             [self establishVoipCall:phone andWithStartVideo:isVideo];
         }
     }];
 }
+
+- (void) showLocalVideo:(CDVInvokedUrlCommand *)command {
+    NSArray *params = command.arguments;
+    [self validateInvokedUrlCommand:command withRequiredInputs:4];
+    [self.commandDelegate runInBackground:^{
+        int xpos = [[params objectAtIndex:0] intValue];
+        int ypos = [[params objectAtIndex:1] intValue];
+        float width = [[params objectAtIndex:2] floatValue];
+        float height = [[params objectAtIndex:3] floatValue];
+        
+        NSLog(@"Local Video Frame = x = %d,y = %d,width=%f, height=%f",xpos, ypos, width, height);
+        
+        [self setLocalVideoFrame:CGRectMake(xpos, ypos, width, height)];
+    }];
+}
+- (void) hideLocalVideo {
+    
+}
+- (void) showRemoteVideo:(CDVInvokedUrlCommand *)command {
+    NSArray *params = command.arguments;
+    [self validateInvokedUrlCommand:command withRequiredInputs:4];
+    [self.commandDelegate runInBackground:^{
+        int xpos = [[params objectAtIndex:0] intValue];
+        int ypos = [[params objectAtIndex:1] intValue];
+        float width = [[params objectAtIndex:2] floatValue];
+        float height = [[params objectAtIndex:3] floatValue];
+        
+        NSLog(@"Remote Video Frame = x = %d,y = %d,width=%f, height=%f",xpos, ypos, width, height);
+        [self setLocalVideoFrame:CGRectMake(xpos, ypos, width, height)];
+    }];
+}
+
+- (void) hideRemoteVideo {
+    
+}
+
 - (void) createPSTNCall:(CDVInvokedUrlCommand *)command {
     NSArray *params = command.arguments;
     [self validateInvokedUrlCommand:command withRequiredInputs:1];
@@ -580,23 +324,23 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
         }
     }];
 }
-- (void) hangupCall:(CDVInvokedUrlCommand *)command {
+- (void) hangup:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self hangupCall];
 }
-- (void) muteCall:(CDVInvokedUrlCommand *)command {
+- (void) mute:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self doMute:YES];
 }
-- (void) unMuteCall:(CDVInvokedUrlCommand *)command {
+- (void) UnMute:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self doMute:NO];
 }
-- (void) holdCall:(CDVInvokedUrlCommand *)command {
+- (void) hold:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self doHold:YES];
 }
-- (void) unHoldCall:(CDVInvokedUrlCommand *)command {
+- (void) unHold:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self doHold:NO];
 }
@@ -608,15 +352,15 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
     self.callbackID = command.callbackId;
     [self doEnableVideo:NO];
 }
-- (void) acceptCall:(CDVInvokedUrlCommand *)command {
+- (void) accept:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self doAcceptCallWithVideo:self.startVideoCall];
 }
-- (void) rejectCall:(CDVInvokedUrlCommand *)command {
+- (void) reject:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self doRejectCall];
 }
-- (void) ignoreCall:(CDVInvokedUrlCommand *)command {
+- (void) ignore:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self doIgnoreCall];
 }
@@ -653,17 +397,34 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
 - (void) cancelMediaTransfer:(CDVInvokedUrlCommand *)command {
     //TODO:
 }
+
+- (void) pickAudio:(CDVInvokedUrlCommand *)command {
+    //TODO:
+}
+
 - (void) sendAudio:(CDVInvokedUrlCommand *)command {
     //TODO:
+}
+- (void) pickVideo:(CDVInvokedUrlCommand *)command; {
+     //TODO:
 }
 - (void) sendVideo:(CDVInvokedUrlCommand *)command {
      //TODO:
 }
+- (void) pickImage:(CDVInvokedUrlCommand *)command {
+     //TODO:    
+}
 - (void) sendImage:(CDVInvokedUrlCommand *)command {
+     //TODO:
+}
+- (void) pickFile:(CDVInvokedUrlCommand *)command {
      //TODO:
 }
 - (void) sendFile:(CDVInvokedUrlCommand *)command {
      //TODO:
+}
+- (void) pickContact:(CDVInvokedUrlCommand *)command {
+    
 }
 - (void) sendContact:(CDVInvokedUrlCommand *)command {
      //TODO:
@@ -812,30 +573,36 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
 - (void) requestCodeWithPhone:(NSString *)phoneno andISOCountryCode:(NSString *)isocode {
     isocode = isocode ? isocode : @"US";
     KandyAreaCode * kandyAreaCode = [[KandyAreaCode alloc] initWithISOCode:isocode andCountryName:@"" andPhonePrefix:@""];
-    [[Kandy sharedInstance].provisioning requestCode:kandyAreaCode
-                 phoneNumber:phoneno
-         andResponseCallback:^(NSError *error, NSString *destinationToValidate) {
-             [self didHandleResponse:error];
-     }];
-
+    [[Kandy sharedInstance].provisioning requestCode:kandyAreaCode phoneNumber:phoneno responseCallback:^(NSError *error, NSString *destinationToValidate) {
+        [self didHandleResponse:error];
+    }];
 }
 
 - (void) validateWithOTP:(NSString *)otp andPhone:(NSString *)phoneno andISOCountryCode:(NSString *)isocode  {
     KandyAreaCode * kandyAreaCode = [[KandyAreaCode alloc] initWithISOCode:isocode andCountryName:@"" andPhonePrefix:@""];
-    [[Kandy sharedInstance].provisioning validate:otp
-                 areaCode:kandyAreaCode
-              destination:phoneno
-      andResponseCallback:^(NSError *error, KandyUserInfo *signupData) {
-          [self didHandleResponse:error];
-  }];
-
+    [[Kandy sharedInstance].provisioning validate:otp areaCode:kandyAreaCode destination:phoneno responseCallback:^(NSError *error, KandyUserInfo *userInfo) {
+        if (error) {
+            [self didHandleResponse:error];
+        } else {
+            NSDictionary *jsonObj = [ [NSDictionary alloc]
+                                     initWithObjectsAndKeys :
+                                     userInfo.userId, @"id",
+                                     userInfo.record.domain, @"domain",
+                                     userInfo.record.userName, @"username",
+                                     userInfo.password, @"password",
+                                     nil
+                                     ];
+            
+            [self notifySuccessResponse:jsonObj];
+        }
+    }];
 }
 
 - (void) deactivate {
     KandyUserInfo *userInfo = [Kandy sharedInstance].sessionManagement.provisionedUsers.lastObject;
     if(userInfo)
     {
-        [[Kandy sharedInstance].provisioning deactivate:userInfo withResponseCallback:^(NSError *error) {
+        [[Kandy sharedInstance].provisioning deactivate:userInfo responseCallback:^(NSError *error) {
             [self didHandleResponse:error];
         }];
     }
@@ -861,7 +628,7 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
     }
     
     KandyUserInfo * kandyUserInfo = [[KandyUserInfo alloc] initWithUserId:usrname password:pwd];
-    [[Kandy sharedInstance].access login:kandyUserInfo andResponseCallback:^(NSError *error) {
+    [[Kandy sharedInstance].access login:kandyUserInfo responseCallback:^(NSError *error) {
         if (error) {
             [self notifyFailureResponse:kandy_error_message];
         } else {
@@ -893,28 +660,39 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
         } else {
             NSDictionary *jsonObj = [ [NSDictionary alloc]
                                      initWithObjectsAndKeys :
-                                     areaCode.countryName, @"nameLong",
+                                     areaCode.countryName, @"long",
                                      areaCode.isoCode, @"code",
-                                     areaCode.phonePrefix, @"nameShort",
+                                     areaCode.phonePrefix, @"short",
                                      nil
                                      ];
             
             [self notifySuccessResponse:jsonObj];
         }
     }];
-    
 }
 
 /*
  *  Call
  */
-//Callback
-- (void) didHandleResponse:(NSError *)error {
-    if (error) {
-        [self notifyFailureResponse:[NSString stringWithFormat:kandy_error_message,error.code,error.description]];
-    } else {
-        [self notifySuccessResponse:nil];
-    }
+
+- (void) setLocalVideoFrame:(CGRect)frame {
+    // Local Video
+    [self.viewLocalVideo setFrame:frame];
+}
+
+- (void) setRemoteVideoFrame:(CGRect)frame {
+    // Remote Video
+    [self.viewRemoteVideo setFrame:frame];
+}
+
+- (void) removeLocalVideoView {
+    [self.viewLocalVideo removeFromSuperview];
+    self.viewLocalVideo = nil;
+}
+
+- (void) removeRemoteVideoView {
+    [self.viewLocalVideo removeFromSuperview];
+    self.viewLocalVideo = nil;
 }
 
 -(void)establishVoipCall:(NSString *)voip andWithStartVideo:(BOOL)videoOn {
@@ -922,7 +700,7 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
         [self notifyFailureResponse:kandy_calls_invalid_phone_text_msg];
         return;
     }
-    KandyRecord * kandyRecord = [[KandyRecord alloc] initWithURI:voip andWithType:EKandyRecordType_contact andAssociationType:EKandyRecordAssociationType_community];
+    KandyRecord * kandyRecord = [[KandyRecord alloc] initWithURI:voip];
     self.kandyOutgoingCall = [[Kandy sharedInstance].services.call createVoipCall:kandyRecord isStartVideo:videoOn];
     [self initOutgoingCallWithDialog];
 }
@@ -1115,6 +893,20 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
     }];
 }
 
+-(void)manualDownload:(id<KandyMessageProtocol>)kandyMessage{
+    [[Kandy sharedInstance].services.chat downloadMedia:kandyMessage progressCallback:^(KandyTransferProgress *transferProgress) {
+        //TODO:
+        //[self _updateDownloadProgressWithMessage:kandyMessage transferProgress:transferProgress downloadFinished:NO];
+    } responseCallback:^(NSError *error, NSString *fileAbsolutePath) {
+        if (error) {
+            //
+        } else {
+            //TODO:
+            ///[self _updateDownloadProgressWithMessage:kandyMessage transferProgress:nil downloadFinished:YES];
+        }
+    }];
+}
+
 -(void)pullEvents {
     [[Kandy sharedInstance].services.chat pullEventsWithResponseCallback:^(NSError *error) {
         [self didHandleResponse:error];
@@ -1128,7 +920,7 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
  */
 
 -(void)ackEvents:(NSArray*)arrKandyEvents {
-    [[Kandy sharedInstance].services.chat markAsReceived:arrKandyEvents withResponseCallback:^(NSError *error) {
+    [[Kandy sharedInstance].services.chat markAsReceived:arrKandyEvents responseCallback:^(NSError *error) {
         [self didHandleResponse:error];
     }];
 }
@@ -1143,9 +935,8 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
         [self notifyFailureResponse:kandy_error_message];
     }
 
-    KandyRecord* kandyRecord = [[KandyRecord alloc]initWithURI:userlist andWithType:EKandyRecordType_contact andAssociationType:EKandyRecordAssociationType_community];
-    
-    [[Kandy sharedInstance].services.presence getPresenceForRecords:[NSArray arrayWithObject:kandyRecord] withResponseCallback:^(NSError *error, NSArray *presenceObjects, NSArray * missingPresenceKandyRecords) {
+    KandyRecord* kandyRecord = [[KandyRecord alloc]initWithURI:userlist];
+    [[Kandy sharedInstance].services.presence getPresenceForRecords:[NSArray arrayWithObject:kandyRecord] responseCallback:^(NSError *error, NSArray *presenceObjects, NSArray * missingPresenceKandyRecords) {
         [self didHandleResponse:error];
     }];
 }
@@ -1200,4 +991,381 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
         [self didHandleResponse:error];
     }];
 }
+
+#pragma mark - Helper methods
+
+- (void) didReceiveRemoteNotification:(NSData *)deviceToken {
+    [[NSUserDefaults standardUserDefaults]setObject:deviceToken forKey:@"deviceToken"];
+}
+- (void) didHandleResponse:(NSError *)error {
+    if (error) {
+        [self notifyFailureResponse:[NSString stringWithFormat:kandy_error_message,error.code,error.description]];
+    } else {
+        [self notifySuccessResponse:nil];
+    }
+}
+- (void) notifySuccessResponse:(id)response {
+    [self notifySuccessResponse:response withCallbackID:self.callbackID];
+}
+
+- (void) notifySuccessResponse:(id)response withCallbackID:(NSString *)callbackId {
+    // Create an instance of CDVPluginResult, with an OK status code.
+    CDVPluginResult *pluginResult;
+    if ([response isKindOfClass:[NSDictionary class]]) {
+        pluginResult = [ CDVPluginResult
+                        resultWithStatus    : CDVCommandStatus_OK
+                        messageAsDictionary : response
+                        ];
+    } else {
+        pluginResult = [ CDVPluginResult
+                        resultWithStatus    : CDVCommandStatus_OK
+                        messageAsString:response
+                        ];
+    }
+    // Execute sendPluginResult on this plugin's commandDelegate, passing in the ...
+    // ... instance of CDVPluginResult
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
+}
+
+- (void) notifyFailureResponse:(NSString *)errString {
+    [self notifyFailureResponse:errString withCallbackID:self.callbackID];
+}
+
+- (void) notifyFailureResponse:(NSString *)errString withCallbackID:(NSString *)callbackId {
+    // Create an instance of CDVPluginResult, with an OK status code.
+    // Set the return message as the String object (errString)...
+    CDVPluginResult *pluginResult = [ CDVPluginResult
+                                     resultWithStatus    : CDVCommandStatus_ERROR
+                                     messageAsString:errString
+                                     ];
+    
+    // Execute sendPluginResult on this plugin's commandDelegate, passing in the ...
+    // ... instance of CDVPluginResult
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
+}
+
+- (void) handleRequiredInputError {
+    [self notifyFailureResponse:@"Missing required input parameter" withCallbackID:self.callbackID];
+}
+
+- (void) validateInvokedUrlCommand:(CDVInvokedUrlCommand *)command withRequiredInputs:(int)inputs {
+    self.callbackID = command.callbackId;
+    NSArray *params = command.arguments;
+    if (params && [params count] < 1) {
+        [self handleRequiredInputError];
+        return;
+    }
+}
+
+- (void) answerIncomingCall {
+    self.incomingCallOPtions = [[UIActionSheet alloc] initWithTitle:@"Incoming Call" delegate:self cancelButtonTitle:@"Cancel" destructiveButtonTitle:nil otherButtonTitles:@"Accept With Video", @"Accept Without Video", @"Reject", @"Ignore", nil];
+    UIWindow *window = [[[UIApplication sharedApplication] delegate] window];
+    [self.incomingCallOPtions showInView:window.rootViewController.view];
+}
+
+- (void) initOutgoingCallWithDialog {
+    [self.kandyOutgoingCall establishWithResponseBlock:^(NSError *error) {
+        if (error) {
+            [self didHandleResponse:error];
+        } else if(self.showNativeVideoPage) {
+            CallViewController *callVC = [[CallViewController alloc] initWithNibName:@"CallView" bundle:nil];
+            callVC.kandyCall = self.kandyOutgoingCall;
+            UIWindow *window = [[[UIApplication sharedApplication] delegate] window];
+            [window.rootViewController presentViewController:callVC animated:YES completion:nil];
+        } else {
+            
+            // Local Video
+            self.viewLocalVideo = [[UIView alloc] initWithFrame:CGRectMake(10, 200, 300, 200)];
+            self.viewLocalVideo.backgroundColor = [UIColor blackColor];
+            [self.webView.superview addSubview:self.viewLocalVideo];
+            self.kandyOutgoingCall.localVideoView = self.viewLocalVideo;
+            
+            // Remote Video
+            self.viewRemoteVideo = [[UIView alloc] initWithFrame:CGRectMake(10, 410, 100, 100)];
+            self.viewRemoteVideo.backgroundColor = [UIColor blackColor];
+            [self.webView.superview addSubview:self.viewRemoteVideo];
+            self.kandyOutgoingCall.remoteVideoView = self.viewRemoteVideo;
+        }
+        [self notifySuccessResponse:@"Call Init"];
+    }];
+}
+
+- (NSDictionary *) enumerateContactDetails:(NSArray *)kandyContacts {
+    NSMutableDictionary *contacts = [[NSMutableDictionary alloc] init];
+    for (id <KandyContactProtocol> kandyContact in kandyContacts) {
+        NSMutableDictionary *deviceContacts = [[NSMutableDictionary alloc] init];
+        [deviceContacts setValue:kandyContact.displayName forKey:@"displayName"];
+        NSMutableDictionary *deviceEmailContacts = [[NSMutableDictionary alloc] init];
+        for (id <KandyEmailContactRecordProtocol> kandyEmailContactRecord in kandyContact.emails) {
+            [deviceEmailContacts setValue:kandyEmailContactRecord.email forKey:@"address"];
+            [deviceEmailContacts setValue:@(kandyEmailContactRecord.valueType) forKey:@"type"];
+        }
+        [deviceContacts setValue:deviceEmailContacts forKey:@"emails"];
+        NSMutableDictionary *devicePhoneContacts = [[NSMutableDictionary alloc] init];
+        for (id <KandyPhoneContactRecordProtocol> kandyPhoneContactRecord in kandyContact.phones) {
+            [devicePhoneContacts setValue:kandyPhoneContactRecord.phone forKey:@"number"];
+            [devicePhoneContacts setValue:@(kandyPhoneContactRecord.valueType) forKey:@"type"];
+        }
+        [deviceContacts setValue:devicePhoneContacts forKey:@"phones"];
+        [contacts setValue:deviceContacts forKey:@"contacts"];
+    }
+    return contacts;
+}
+
+- (void) showNativeAlert:(NSString *)message {
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil
+                                                    message:message
+                                                   delegate:self
+                                          cancelButtonTitle:@"OK"
+                                          otherButtonTitles:nil];
+    [alert show];
+}
+
+
+#pragma mark - Delegate
+
+/**
+ * The listeners for callback
+ */
+
+#pragma mark - KandyConnectServiceNotificationDelegate
+
+-(void) connectionStatusChanged:(EKandyConnectionState)connectionStatus{
+    NSDictionary *jsonObj = [[NSDictionary alloc]
+                             initWithObjectsAndKeys:
+                             @"onConnectionStateChanged",@"action",
+                             @(connectionStatus), @"state",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyConnectServiceNotificationCallback];
+}
+
+-(void) gotInvalidUser:(NSError*)error{
+    NSDictionary *jsonObj = [[NSDictionary alloc]
+                             initWithObjectsAndKeys:
+                             @"onInvalidUser",@"action",
+                             error, @"error",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyConnectServiceNotificationCallback];
+}
+// Handled by appDelegate
+-(void) sessionExpired:(NSError*)error{
+}
+// Handled by appDelegate
+-(void) SDKNotSupported:(NSError*)error{
+}
+
+#pragma mark - KandyCallServiceNotificationDelegate
+
+/**
+ *
+ * @param call
+ */
+-(void) gotIncomingCall:(id<KandyIncomingCallProtocol>)call{
+    self.kandyIncomingCall = call;
+    NSDictionary *jsonObj = [[NSDictionary alloc]
+                             initWithObjectsAndKeys:
+                             @"onIncomingCall",@"action",
+                             call.callId,@"id",
+                             call.callee.uri, @"callee",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
+    
+    //TODO: Need to check whether need thread
+    [self answerIncomingCall];
+}
+
+/**
+ *
+ * @param state
+ * @param call
+ */
+-(void) stateChanged:(EKandyCallState)callState forCall:(id<KandyCallProtocol>)call{
+    
+    NSDictionary *jsonObj = [[NSDictionary alloc]
+                             initWithObjectsAndKeys:
+                             @"onCallStateChanged",@"action",
+                             call.callId,@"id",
+                             call.callee.uri, @"callee",
+                             @(callState), @"state",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
+    
+    [self.incomingCallOPtions dismissWithClickedButtonIndex:3 animated:YES];
+}
+
+/**
+ *
+ * @param iKandyCall
+ * @param isReceivingVideo
+ * @param isSendingVideo
+ */
+-(void) videoStateChangedForCall:(id<KandyCallProtocol>)call{
+    NSDictionary *jsonObj = [[NSDictionary alloc]
+                             initWithObjectsAndKeys:
+                             @"onVideoStateChanged",@"action",
+                             call.callId,@"id",
+                             call.callee.uri, @"callee",
+                             @(call.isReceivingVideo),@"isReceivingVideo",
+                             @(call.isSendingVideo), @"isSendingVideo",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
+}
+
+/**
+ *
+ * @param call
+ * @param onMute
+ */
+-(void) audioRouteChanged:(EKandyCallAudioRoute)audioRoute forCall:(id<KandyCallProtocol>)call{
+    NSDictionary *jsonObj = [[NSDictionary alloc]
+                             initWithObjectsAndKeys:
+                             @"onVideoStateChanged",@"action",
+                             call.callId,@"id",
+                             call.callee.uri, @"callee",
+                             @(call.isMute), @"isMute",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
+}
+-(void) gotMissedCall:(id<KandyCallProtocol>)call{
+    NSDictionary *jsonObj = [[NSDictionary alloc]
+                             initWithObjectsAndKeys:
+                             @"onMissedCall",@"action",
+                             call.callId,@"id",
+                             call.callee.uri, @"callee",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
+}
+-(void) participantsChanged:(NSArray*)participants forCall:(id<KandyCallProtocol>)call{
+}
+-(void) videoCallImageOrientationChanged:(EKandyVideoCallImageOrientation)newImageOrientation forCall:(id<KandyCallProtocol>)call{
+}
+/**
+ *
+ * @param call
+ */
+-(void) GSMCallIncoming{
+    NSDictionary *jsonObj = [[NSDictionary alloc]
+                             initWithObjectsAndKeys:
+                             @"onGSMCallIncoming",@"action",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
+}
+
+-(void) GSMCallDialing{
+}
+-(void) GSMCallConnected {
+    NSDictionary *jsonObj = [[NSDictionary alloc]
+                             initWithObjectsAndKeys:
+                             @"onGSMCallConnected",@"action",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
+}
+-(void) GSMCallDisconnected {
+    NSDictionary *jsonObj = [[NSDictionary alloc]
+                             initWithObjectsAndKeys:
+                             @"onGSMCallDisconnected",@"action",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
+}
+
+#pragma mark - KandyChatServiceNotificationDelegate
+
+
+-(void)onMessageReceived:(id<KandyMessageProtocol>)kandyMessage recipientType:(EKandyRecordType)recipientType {
+    NSDictionary *jsonObj = [[NSDictionary alloc]
+                             initWithObjectsAndKeys:
+                             @"onChatReceived",@"action",
+                             kandyMessage.uuid,@"UUID",
+                             kandyMessage.sender.uri, @"sender",
+                             kandyMessage.mediaItem.text , @"message",
+                             kandyMessage.timestamp , @"timestamp",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
+    
+}
+-(void)onMessageDelivered:(KandyDeliveryAck *)ackData {
+    NSDictionary *jsonObj = [[NSDictionary alloc]
+                             initWithObjectsAndKeys:
+                             @"onChatDelivered",@"action",
+                             ackData.uuid,@"UUID",
+                             ackData.timestamp , @"timestamp",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
+}
+
+-(void) onAutoDownloadProgress:(KandyTransferProgress*)transferProgress kandyMessage:(id<KandyMessageProtocol>)kandyMessage {
+    NSDictionary *jsonObj = [[NSDictionary alloc]
+                             initWithObjectsAndKeys:
+                             @"onChatMediaAutoDownloadProgress",@"action",
+                             kandyMessage.uuid,@"UUID",
+                             kandyMessage.timestamp , @"timestamp",
+                             transferProgress.transferProgressPercentage, @"process",
+                             transferProgress.transferState, @"state",
+                             transferProgress.transferredSize, @"byteTransfer",
+                             transferProgress.expectedSize, @"byteExpected",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
+}
+
+-(void) onAutoDownloadFinished:(NSError*)error fileAbsolutePath:(NSString*)path kandyMessage:(id<KandyMessageProtocol>)kandyMessage {
+    NSDictionary *jsonObj;
+    if(error)
+    {
+        jsonObj = [[NSDictionary alloc]
+                   initWithObjectsAndKeys:
+                   @"onChatMediaAutoDownloadFailed",@"action",
+                   error.description,@"error",
+                   error.code,@"code",
+                   nil
+                   ];
+    } else {
+        jsonObj = [[NSDictionary alloc]
+                   initWithObjectsAndKeys:
+                   @"onChatMediaAutoDownloadSucceded",@"action",
+                   kandyMessage.recipient.uri,@"uri",
+                   nil
+                   ];
+    }
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
+}
+
+#pragma mark - KandyContactsServiceNotificationDelegate
+
+-(void)onDeviceContactsChanged {
+    [self notifySuccessResponse:nil withCallbackID:self.kandyAddressBookServiceNotificationCallback];
+}
+
+#pragma mark - UIActionSheetDelegate
+- (void)actionSheet:(UIActionSheet *)popup clickedButtonAtIndex:(NSInteger)buttonIndex {
+    switch (buttonIndex) {
+        case 0:
+            [self doAcceptCallWithVideo:YES];
+            break;
+        case 1:
+            [self doAcceptCallWithVideo:NO];
+            break;
+        case 2:
+            [self doRejectCall];
+            break;
+        case 3:
+            [self doIgnoreCall];
+            break;
+        default:
+            break;
+    }
+}
+
 @end
