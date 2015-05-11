@@ -172,7 +172,7 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
     NSLog(@"configurations Variables %@", config);
     if (config && [config count] > 0) {
         NSDictionary *configvariables = [config objectAtIndex:0];
-        self.hasNativeCallView = [configvariables objectForKey:@"hasNativeCallView"];
+        self.hasNativeCallView = [[configvariables objectForKey:@"hasNativeCallView"] boolValue];
     }
 }
 
@@ -1075,13 +1075,13 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
         } else {
             
             // Local Video
-            self.viewLocalVideo = [[UIView alloc] initWithFrame:CGRectMake(10, 200, 300, 200)];
+            self.viewLocalVideo = [[UIView alloc] initWithFrame:CGRectZero];
             self.viewLocalVideo.backgroundColor = [UIColor blackColor];
             [self.webView.superview addSubview:self.viewLocalVideo];
             self.kandyOutgoingCall.localVideoView = self.viewLocalVideo;
             
             // Remote Video
-            self.viewRemoteVideo = [[UIView alloc] initWithFrame:CGRectMake(10, 410, 100, 100)];
+            self.viewRemoteVideo = [[UIView alloc] initWithFrame:CGRectZero];
             self.viewRemoteVideo.backgroundColor = [UIColor blackColor];
             [self.webView.superview addSubview:self.viewRemoteVideo];
             self.kandyOutgoingCall.remoteVideoView = self.viewRemoteVideo;

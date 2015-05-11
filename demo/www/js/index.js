@@ -21,7 +21,7 @@ var app = {
     receivedEvent: function (id) {
         // Initialize Kandy plugin
 
-        var config = {"hasNativeCallView": "true" };
+        var config = {"hasNativeCallView": true };
 
         Kandy.initialize(config);
         Kandy.onChatReceived = function (args) {
