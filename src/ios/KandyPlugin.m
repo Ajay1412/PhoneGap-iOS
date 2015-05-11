@@ -9,46 +9,7 @@
 #import "KandyPlugin.h"
 #import <KandySDK/KandySDK.h>
 #import "CallViewController.h"
-
-// Kandy PhoneGap Plugin String
-
-static NSString *kandy_error_message = @"Response code: %d - %@";
-static NSString *kandy_login_login_success = @"Login succeed";
-static NSString *kandy_login_logout_success = @"Logout succeed";
-static NSString *kandy_login_empty_username_text = @"Invalid username (userID@domain.com)";
-static NSString *kandy_login_empty_password_text = @"Enter password";
-
-static NSString *kandy_calls_local_video_label = @"Local video";
-static NSString *kandy_calls_checkbox_label = @"Start with video";
-static NSString *kandy_calls_state_video_label = @"Video state";
-static NSString *kandy_calls_state_audio_label = @"Audio state";
-static NSString *kandy_calls_state_calls_label = @"Calls state";
-static NSString *kandy_calls_hold_label = @"hold";
-static NSString *kandy_calls_unhold_label = @"unhold";
-static NSString *kandy_calls_mute_label = @"mute";
-static NSString *kandy_calls_unmute_label = @"unmute";
-static NSString *kandy_calls_video_label = @"video";
-static NSString *kandy_calls_novideo_label = @"no video";
-static NSString *kandy_calls_call_button_label = @"Call";
-static NSString *kandy_calls_hangup_button_label = @"Hangup";
-static NSString *kandy_calls_receiving_video_state = @"Receiving video:";
-static NSString *kandy_calls_sending_video_state = @"Sending video:";
-static NSString *kandy_calls_audio_state = @"Audio isMute:";
-static NSString *kandy_calls_phone_number_hint = @"userID@domain.com";
-static NSString *kandy_calls_invalid_phone_text_msg = @"Invalid recipient (recipientID@domain.com)";
-static NSString *kandy_calls_invalid_domain_text_msg = @"Wrong domain";
-static NSString *kandy_calls_invalid_hangup_text_msg = @"No active calls";
-static NSString *kandy_calls_invalid_hold_text_msg = @"Can not hold - No Active Call";
-static NSString *kandy_calls_invalid_mute_call_text_msg = @"Can not mute - No active calls";
-static NSString *kandy_calls_invalid_video_call_text_msg = @"Can not enable/disable video - No active calls";
-static NSString *kandy_calls_attention_title_text = @"!!! ATTENTION !!!";
-static NSString *kandy_calls_full_user_id_message_text = @"Enter full destination user id (userID@domain.com)";
-static NSString *kandy_calls_answer_button_label = @"Answer";
-static NSString *kandy_calls_ignore_incoming_call_button_label = @"Ignore";
-static NSString *kandy_calls_reject_incoming_call_button_label = @"Reject";
-static NSString *kandy_calls_incoming_call_popup_message_label = @"Incoming call from:";
-static NSString *kandy_calls_remote_video_label = @"Remote video";
-static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient\'s number (recipientID@domain.com)";
+#import "KandyUtil.h"
 
 @interface KandyPlugin() <KandyCallServiceNotificationDelegate, KandyChatServiceNotificationDelegate, KandyContactsServiceNotificationDelegate, KandyAccessNotificationDelegate,  UIActionSheetDelegate>
 
@@ -136,18 +97,16 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
     NSString *apikey = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"PROJECT_API_KEY"];
     NSString *apisecret = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"PROJECT_API_SECRET"];
     if (apikey && apisecret) {
-        NSLog(@"wow.....Getting the values");
         [Kandy initializeSDKWithDomainKey:apikey domainSecret:apisecret];
     }
     else {
-        NSLog(@"Not getting the values");
         [Kandy initializeSDKWithDomainKey:@"DAK525fffbaa0414f3f98a5dc482472006a" domainSecret:@"DASac5063f90ca64d22ac987e82e006733f"];
     }
     self.startVideoCall = YES;
     
     self.connectionState = @[@"DISCONNECTING", @"DISCONNECTED", @"CONNECTING", @"CONNECTED"];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveRemoteNotification:) name:CDVRemoteNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didRegisterForRemoteNotificationsWithDeviceToken:) name:CDVRemoteNotification object:nil];
 }
 
 - (void) registerNotifications {
@@ -179,10 +138,10 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
 - (void) makeToast:(CDVInvokedUrlCommand *)command {
     NSArray *params = command.arguments;
     [self validateInvokedUrlCommand:command withRequiredInputs:1];
-    [self.commandDelegate runInBackground:^{
+    //[self.commandDelegate runInBackground:^{
         __block NSString * message = [params objectAtIndex:0];
         [self showNativeAlert:message];
-    }];
+    //}];
 }
 - (void) connectServiceNotificationCallback:(CDVInvokedUrlCommand *)command {
     self.kandyConnectServiceNotificationCallback = command.callbackId;
@@ -994,7 +953,7 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
 
 #pragma mark - Helper methods
 
-- (void) didReceiveRemoteNotification:(NSData *)deviceToken {
+- (void) didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
     [[NSUserDefaults standardUserDefaults]setObject:deviceToken forKey:@"deviceToken"];
 }
 - (void) didHandleResponse:(NSError *)error {
@@ -1130,30 +1089,40 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
 
 #pragma mark - KandyConnectServiceNotificationDelegate
 
--(void) connectionStatusChanged:(EKandyConnectionState)connectionStatus{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
+-(void) connectionStatusChanged:(EKandyConnectionState)connectionStatus {
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onConnectionStateChanged",@"action",
-                             @(connectionStatus), @"state",
+                             [self.connectionState objectAtIndex:connectionStatus], @"data",
                              nil
                              ];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyConnectServiceNotificationCallback];
 }
 
 -(void) gotInvalidUser:(NSError*)error{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onInvalidUser",@"action",
-                             error, @"error",
+                             error, @"data",
                              nil
                              ];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyConnectServiceNotificationCallback];
 }
 // Handled by appDelegate
 -(void) sessionExpired:(NSError*)error{
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
+                             @"onSessionExpired",@"action",
+                             error, @"data",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyConnectServiceNotificationCallback];
 }
 // Handled by appDelegate
 -(void) SDKNotSupported:(NSError*)error{
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
+                             @"onSDKNotSupported",@"action",
+                             error, @"data",
+                             nil
+                             ];
+    [self notifySuccessResponse:jsonObj withCallbackID:self.kandyConnectServiceNotificationCallback];
 }
 
 #pragma mark - KandyCallServiceNotificationDelegate
@@ -1164,11 +1133,10 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
  */
 -(void) gotIncomingCall:(id<KandyIncomingCallProtocol>)call{
     self.kandyIncomingCall = call;
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onIncomingCall",@"action",
-                             call.callId,@"id",
-                             call.callee.uri, @"callee",
+                             [NSDictionary dictionaryWithObjectsAndKeys:call.callId,@"id",
+                              call.callee.uri, @"callee",nil], @"data",
                              nil
                              ];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
@@ -1184,16 +1152,13 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
  */
 -(void) stateChanged:(EKandyCallState)callState forCall:(id<KandyCallProtocol>)call{
     
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onCallStateChanged",@"action",
-                             call.callId,@"id",
-                             call.callee.uri, @"callee",
-                             @(callState), @"state",
+                             [NSDictionary dictionaryWithObjectsAndKeys:call.callId,@"id",
+                             call.callee.uri, @"callee", nil], @"data",
                              nil
                              ];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
-    
     [self.incomingCallOPtions dismissWithClickedButtonIndex:3 animated:YES];
 }
 
@@ -1204,13 +1169,12 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
  * @param isSendingVideo
  */
 -(void) videoStateChangedForCall:(id<KandyCallProtocol>)call{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onVideoStateChanged",@"action",
-                             call.callId,@"id",
+                             [NSDictionary dictionaryWithObjectsAndKeys:call.callId,@"id",
                              call.callee.uri, @"callee",
                              @(call.isReceivingVideo),@"isReceivingVideo",
-                             @(call.isSendingVideo), @"isSendingVideo",
+                             @(call.isSendingVideo), @"isSendingVideo",nil], @"data",
                              nil
                              ];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
@@ -1222,22 +1186,20 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
  * @param onMute
  */
 -(void) audioRouteChanged:(EKandyCallAudioRoute)audioRoute forCall:(id<KandyCallProtocol>)call{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
-                             @"onVideoStateChanged",@"action",
-                             call.callId,@"id",
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
+                             @"onAudioStateChanged",@"action",
+                             [NSDictionary dictionaryWithObjectsAndKeys:call.callId,@"id",
                              call.callee.uri, @"callee",
-                             @(call.isMute), @"isMute",
+                             @(call.isMute), @"isMute",nil], @"data",
                              nil
                              ];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
 }
 -(void) gotMissedCall:(id<KandyCallProtocol>)call{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onMissedCall",@"action",
-                             call.callId,@"id",
-                             call.callee.uri, @"callee",
+                             [NSDictionary dictionaryWithObjectsAndKeys:call.callId,@"id",
+                             call.callee.uri, @"callee", nil], @"data",
                              nil
                              ];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
@@ -1250,9 +1212,8 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
  *
  * @param call
  */
--(void) GSMCallIncoming{
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
+-(void) GSMCallIncoming {
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onGSMCallIncoming",@"action",
                              nil
                              ];
@@ -1262,16 +1223,14 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
 -(void) GSMCallDialing{
 }
 -(void) GSMCallConnected {
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onGSMCallConnected",@"action",
                              nil
                              ];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
 }
 -(void) GSMCallDisconnected {
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onGSMCallDisconnected",@"action",
                              nil
                              ];
@@ -1282,39 +1241,37 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
 
 
 -(void)onMessageReceived:(id<KandyMessageProtocol>)kandyMessage recipientType:(EKandyRecordType)recipientType {
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onChatReceived",@"action",
-                             kandyMessage.uuid,@"UUID",
+                             [NSDictionary dictionaryWithObjectsAndKeys:kandyMessage.uuid,@"UUID",
                              kandyMessage.sender.uri, @"sender",
                              kandyMessage.mediaItem.text , @"message",
                              kandyMessage.timestamp , @"timestamp",
+                             @(recipientType),@"type", nil], @"data",
                              nil
                              ];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
     
 }
 -(void)onMessageDelivered:(KandyDeliveryAck *)ackData {
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onChatDelivered",@"action",
-                             ackData.uuid,@"UUID",
-                             ackData.timestamp , @"timestamp",
+                             [NSDictionary dictionaryWithObjectsAndKeys:ackData.uuid,@"UUID",
+                             ackData.timestamp , @"timestamp",nil], @"data",
                              nil
                              ];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
 }
 
 -(void) onAutoDownloadProgress:(KandyTransferProgress*)transferProgress kandyMessage:(id<KandyMessageProtocol>)kandyMessage {
-    NSDictionary *jsonObj = [[NSDictionary alloc]
-                             initWithObjectsAndKeys:
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onChatMediaAutoDownloadProgress",@"action",
-                             kandyMessage.uuid,@"UUID",
+                             [NSDictionary dictionaryWithObjectsAndKeys:kandyMessage.uuid,@"UUID",
                              kandyMessage.timestamp , @"timestamp",
                              transferProgress.transferProgressPercentage, @"process",
                              transferProgress.transferState, @"state",
                              transferProgress.transferredSize, @"byteTransfer",
-                             transferProgress.expectedSize, @"byteExpected",
+                             transferProgress.expectedSize, @"byteExpected", nil], @"data",
                              nil
                              ];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
@@ -1324,18 +1281,16 @@ static NSString *kandy_chat_phone_number_verification_text = @"Invalid recipient
     NSDictionary *jsonObj;
     if(error)
     {
-        jsonObj = [[NSDictionary alloc]
-                   initWithObjectsAndKeys:
+        jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                    @"onChatMediaAutoDownloadFailed",@"action",
-                   error.description,@"error",
-                   error.code,@"code",
+                   [NSDictionary dictionaryWithObjectsAndKeys:error.description,@"error",
+                   error.code,@"code",nil], @"data",
                    nil
                    ];
     } else {
-        jsonObj = [[NSDictionary alloc]
-                   initWithObjectsAndKeys:
+        jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                    @"onChatMediaAutoDownloadSucceded",@"action",
-                   kandyMessage.recipient.uri,@"uri",
+                   [NSDictionary dictionaryWithObjectsAndKeys:kandyMessage.recipient.uri,@"uri",nil], @"data",
                    nil
                    ];
     }
