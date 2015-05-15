@@ -231,8 +231,9 @@
     [self validateInvokedUrlCommand:command withRequiredInputs:2];
     [self.commandDelegate runInBackground:^{
         __block NSString *phone = [params objectAtIndex:0];
-        __block BOOL isVideo = [[params objectAtIndex:1] boolValue];
-        if (phone && isVideo) {
+        __block BOOL isVideo = NO;
+        isVideo = [[params objectAtIndex:1] boolValue];
+        if (phone) {
             [self establishVoipCall:phone andWithStartVideo:isVideo];
         }
     }];
@@ -246,14 +247,11 @@
         int ypos = [[params objectAtIndex:1] intValue];
         float width = [[params objectAtIndex:2] floatValue];
         float height = [[params objectAtIndex:3] floatValue];
-        
-        NSLog(@"Local Video Frame = x = %d,y = %d,width=%f, height=%f",xpos, ypos, width, height);
-        
         [self setLocalVideoFrame:CGRectMake(xpos, ypos, width, height)];
     }];
 }
 - (void) hideLocalVideo {
-    
+    [self removeLocalVideoView];
 }
 - (void) showRemoteVideo:(CDVInvokedUrlCommand *)command {
     NSArray *params = command.arguments;
@@ -263,14 +261,12 @@
         int ypos = [[params objectAtIndex:1] intValue];
         float width = [[params objectAtIndex:2] floatValue];
         float height = [[params objectAtIndex:3] floatValue];
-        
-        NSLog(@"Remote Video Frame = x = %d,y = %d,width=%f, height=%f",xpos, ypos, width, height);
         [self setRemoteVideoFrame:CGRectMake(xpos, ypos, width, height)];
     }];
 }
 
 - (void) hideRemoteVideo {
-    
+    [self removeRemoteVideoView];
 }
 
 - (void) createPSTNCall:(CDVInvokedUrlCommand *)command {
@@ -637,22 +633,27 @@
 
 - (void) setLocalVideoFrame:(CGRect)frame {
     // Local Video
+    [self.viewLocalVideo setHidden:NO];
     [self.viewLocalVideo setFrame:frame];
+    self.kandyOutgoingCall.localVideoView = self.viewLocalVideo;
+    
 }
 
 - (void) setRemoteVideoFrame:(CGRect)frame {
     // Remote Video
+    [self.viewRemoteVideo setHidden:NO];
     [self.viewRemoteVideo setFrame:frame];
+    self.kandyOutgoingCall.remoteVideoView = self.viewRemoteVideo;
 }
 
 - (void) removeLocalVideoView {
+    [self.viewLocalVideo setHidden:YES];
     [self.viewLocalVideo removeFromSuperview];
-    self.viewLocalVideo = nil;
 }
 
 - (void) removeRemoteVideoView {
-    [self.viewLocalVideo removeFromSuperview];
-    self.viewLocalVideo = nil;
+    [self.viewRemoteVideo setHidden:YES];
+    [self.viewRemoteVideo removeFromSuperview];
 }
 
 -(void)establishVoipCall:(NSString *)voip andWithStartVideo:(BOOL)videoOn {
@@ -1107,13 +1108,11 @@
             self.viewLocalVideo = [[UIView alloc] initWithFrame:CGRectZero];
             self.viewLocalVideo.backgroundColor = [UIColor blackColor];
             [self.webView.superview addSubview:self.viewLocalVideo];
-            self.kandyOutgoingCall.localVideoView = self.viewLocalVideo;
             
             // Remote Video
             self.viewRemoteVideo = [[UIView alloc] initWithFrame:CGRectZero];
             self.viewRemoteVideo.backgroundColor = [UIColor blackColor];
             [self.webView.superview addSubview:self.viewRemoteVideo];
-            self.kandyOutgoingCall.remoteVideoView = self.viewRemoteVideo;
         }
         [self notifySuccessResponse:@"Call Init"];
     }];
