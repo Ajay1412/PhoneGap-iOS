@@ -80,7 +80,7 @@
 @property (assign) BOOL hasNativeCallView;
 
 @property (nonatomic) NSArray *connectionState;
-
+@property (nonatomic) NSArray *callState;
 @end
 
 
@@ -105,6 +105,7 @@
     self.startVideoCall = YES;
     
     self.connectionState = @[@"DISCONNECTING", @"DISCONNECTED", @"CONNECTING", @"CONNECTED"];
+    self.callState = @[@"INITIAL", @"RINGING", @"DIALING", @"TALKING", @"TERMINATED", @"ON_DOUBLE_HOLD", @"REMOTELY_HELD", @"ON_HOLD"];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didRegisterForRemoteNotificationsWithDeviceToken:) name:CDVRemoteNotification object:nil];
 }
@@ -1223,7 +1224,7 @@
     
     NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onCallStateChanged",@"action",
-                             [NSDictionary dictionaryWithObjectsAndKeys:call.callId,@"id",
+                             [NSDictionary dictionaryWithObjectsAndKeys:[self.callState objectAtIndex:callState], @"state", call.callId,@"id",
                              call.callee.uri, @"callee", nil], @"data",
                              nil
                              ];
