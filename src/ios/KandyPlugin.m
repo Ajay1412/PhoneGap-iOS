@@ -1055,6 +1055,7 @@
     }
     // Execute sendPluginResult on this plugin's commandDelegate, passing in the ...
     // ... instance of CDVPluginResult
+    [pluginResult setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
 }
 
@@ -1229,7 +1230,7 @@
                              nil
                              ];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
-    [self.incomingCallOPtions dismissWithClickedButtonIndex:3 animated:YES];
+    //[self.incomingCallOPtions dismissWithClickedButtonIndex:3 animated:YES];
 }
 
 /**
