@@ -265,7 +265,7 @@
         float height = [[params objectAtIndex:3] floatValue];
         
         NSLog(@"Remote Video Frame = x = %d,y = %d,width=%f, height=%f",xpos, ypos, width, height);
-        [self setLocalVideoFrame:CGRectMake(xpos, ypos, width, height)];
+        [self setRemoteVideoFrame:CGRectMake(xpos, ypos, width, height)];
     }];
 }
 
@@ -347,15 +347,6 @@
         }
     }];
 }
-- (void) downloadMedia:(CDVInvokedUrlCommand *)command {
-    //TODO:
-}
-- (void) downloadMediaThumbnail:(CDVInvokedUrlCommand *)command {
-    //TODO:
-}
-- (void) cancelMediaTransfer:(CDVInvokedUrlCommand *)command {
-    //TODO:
-}
 
 - (void) pickAudio:(CDVInvokedUrlCommand *)command {
     //TODO:
@@ -411,6 +402,16 @@
 - (void) pullEvents:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
     [self pullEvents];
+}
+
+- (void) downloadMedia:(CDVInvokedUrlCommand *)command {
+    //TODO:
+}
+- (void) downloadMediaThumbnail:(CDVInvokedUrlCommand *)command {
+    //TODO:
+}
+- (void) cancelMediaTransfer:(CDVInvokedUrlCommand *)command {
+    //TODO:
 }
 
 //Group Service
@@ -852,6 +853,71 @@
     }];
 }
 
+- (void) pickAudioFromLibrary {
+    //TODO:
+}
+
+- (void) sendAudioWithChatMessage {
+    //NSString *path = [[NSBundle mainBundle] pathForResource:@"audioItem" ofType:@"m4a"];
+    ///mediaItem = [[Kandy sharedInstance].services.chat.messageBuilder createAudioItem:path text:self.txtMsg.text];
+}
+- (void) pickVideoFromLibrary {
+    //TODO:
+}
+- (void) sendVideoWithChatMessage {
+    //NSString *path = [[NSBundle mainBundle] pathForResource:@"videoItem" ofType:@"MOV"];
+    ///mediaItem = [[Kandy sharedInstance].services.chat.messageBuilder createVideoItem:path text:self.txtMsg.text];
+}
+- (void) pickImageFromLibrary {
+    //TODO:
+}
+- (void) sendImageWithChatMessage {
+    //NSString *path = [[NSBundle mainBundle] pathForResource:@"imageItem" ofType:@"jpeg"];
+    ///mediaItem = [[Kandy sharedInstance].services.chat.messageBuilder createImageItem:path text:self.txtMsg.text];
+}
+- (void) pickFileFromLibrary {
+    //TODO:
+}
+- (void) sendFileWithChatMessage {
+    //TODO:
+}
+- (void) pickContactFromAddressBook {
+    
+}
+- (void) sendContactWithChatMessage {
+    [[Kandy sharedInstance].services.contacts getDeviceContactsWithResponseCallback:^(NSError *error, NSArray *kandyContacts) {
+        /*if(kandyContacts.count > 0)
+        {
+            id<KandyContactProtocol> contact = [kandyContacts objectAtIndex:0];
+            [[Kandy sharedInstance].services.contacts createVCardDataByContact:contact completionBlock:^(NSError *error, NSData *vCardData) {
+                if(!error)
+                {
+                    NSString *vcardPath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"vcard.vcf"];
+                    [vCardData writeToFile:vcardPath atomically:YES];
+                    id<KandyMediaItemProtocol> contactMediaItem = [[Kandy sharedInstance].services.chat.messageBuilder createContactItem:vcardPath text:self.txtMsg.text];
+                    [self _sendMediaItem:contactMediaItem];
+                }
+            }];
+        }
+        else
+        {
+            NSString *vcardPath = [[NSBundle mainBundle] pathForResource:@"vcardItem" ofType:@"vcf"];
+            id<KandyMediaItemProtocol> contactMediaItem = [[Kandy sharedInstance].services.chat.messageBuilder createContactItem:vcardPath text:self.txtMsg.text];
+            [self _sendMediaItem:contactMediaItem];
+        }*/
+    }];
+}
+- (void) sendCurrentLocationWithChatMessage {
+    //CLLocation *location = [[CLLocation alloc] initWithLatitude:40.8283018 longitude:16.5500004];
+    //mediaItem = [[Kandy sharedInstance].services.chat.messageBuilder createLocationItem:location text:self.txtMsg.text];
+}
+
+-(void)pullEvents {
+    [[Kandy sharedInstance].services.chat pullEventsWithResponseCallback:^(NSError *error) {
+        [self didHandleResponse:error];
+    }];
+}
+
 -(void)manualDownload:(id<KandyMessageProtocol>)kandyMessage{
     [[Kandy sharedInstance].services.chat downloadMedia:kandyMessage progressCallback:^(KandyTransferProgress *transferProgress) {
         //TODO:
@@ -866,10 +932,14 @@
     }];
 }
 
--(void)pullEvents {
-    [[Kandy sharedInstance].services.chat pullEventsWithResponseCallback:^(NSError *error) {
-        [self didHandleResponse:error];
-    }];
+- (void) downloadMediaFromChat {
+    //TODO:
+}
+- (void) downloadMediaThumbnailFromChat {
+    //TODO:
+}
+- (void) cancelMediaTransfer {
+    //TODO:
 }
 
 /**
@@ -1175,8 +1245,7 @@
                              call.callee.uri, @"callee",
                              @(call.isReceivingVideo),@"isReceivingVideo",
                              @(call.isSendingVideo), @"isSendingVideo",nil], @"data",
-                             nil
-                             ];
+                             nil];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
 }
 
@@ -1191,8 +1260,7 @@
                              [NSDictionary dictionaryWithObjectsAndKeys:call.callId,@"id",
                              call.callee.uri, @"callee",
                              @(call.isMute), @"isMute",nil], @"data",
-                             nil
-                             ];
+                             nil];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
 }
 -(void) gotMissedCall:(id<KandyCallProtocol>)call{
@@ -1200,8 +1268,7 @@
                              @"onMissedCall",@"action",
                              [NSDictionary dictionaryWithObjectsAndKeys:call.callId,@"id",
                              call.callee.uri, @"callee", nil], @"data",
-                             nil
-                             ];
+                             nil];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
 }
 -(void) participantsChanged:(NSArray*)participants forCall:(id<KandyCallProtocol>)call{
@@ -1215,8 +1282,7 @@
 -(void) GSMCallIncoming {
     NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onGSMCallIncoming",@"action",
-                             nil
-                             ];
+                             nil];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
 }
 
@@ -1225,15 +1291,13 @@
 -(void) GSMCallConnected {
     NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onGSMCallConnected",@"action",
-                             nil
-                             ];
+                             nil];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
 }
 -(void) GSMCallDisconnected {
     NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onGSMCallDisconnected",@"action",
-                             nil
-                             ];
+                             nil];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyCallServiceNotificationCallback];
 }
 
@@ -1248,8 +1312,7 @@
                              kandyMessage.mediaItem.text , @"message",
                              kandyMessage.timestamp , @"timestamp",
                              @(recipientType),@"type", nil], @"data",
-                             nil
-                             ];
+                             nil];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
     
 }
@@ -1258,8 +1321,7 @@
                              @"onChatDelivered",@"action",
                              [NSDictionary dictionaryWithObjectsAndKeys:ackData.uuid,@"UUID",
                              ackData.timestamp , @"timestamp",nil], @"data",
-                             nil
-                             ];
+                             nil];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
 }
 
@@ -1272,8 +1334,7 @@
                              transferProgress.transferState, @"state",
                              transferProgress.transferredSize, @"byteTransfer",
                              transferProgress.expectedSize, @"byteExpected", nil], @"data",
-                             nil
-                             ];
+                             nil];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
 }
 
@@ -1285,14 +1346,12 @@
                    @"onChatMediaAutoDownloadFailed",@"action",
                    [NSDictionary dictionaryWithObjectsAndKeys:error.description,@"error",
                    error.code,@"code",nil], @"data",
-                   nil
-                   ];
+                   nil];
     } else {
         jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                    @"onChatMediaAutoDownloadSucceded",@"action",
                    [NSDictionary dictionaryWithObjectsAndKeys:kandyMessage.recipient.uri,@"uri",nil], @"data",
-                   nil
-                   ];
+                   nil];
     }
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
 }
