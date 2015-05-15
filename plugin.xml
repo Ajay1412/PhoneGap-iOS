@@ -120,7 +120,7 @@
     <header-file src="src/ios/CallViewController.h" />
     <source-file src="src/ios/CallViewController.m" />
     <header-file src="src/ios/KandyUtil.h" />
-    <source-file src="src/ios/src/ios/KandyUtil.m" />
+    <source-file src="src/ios/KandyUtil.m" />
     <resource-file src="src/ios/CallView.xib" />
 
     <config-file target="*-Info.plist" parent="PROJECT_API_KEY">
