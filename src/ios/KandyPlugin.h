@@ -39,9 +39,9 @@
 //Call
 - (void) createVoipCall:(CDVInvokedUrlCommand *)command;
 - (void) showLocalVideo:(CDVInvokedUrlCommand *)command;
-- (void) hideLocalVideo;
+- (void) hideLocalVideo:(CDVInvokedUrlCommand *)command;
 - (void) showRemoteVideo:(CDVInvokedUrlCommand *)command;
-- (void) hideRemoteVideo;
+- (void) hideRemoteVideo:(CDVInvokedUrlCommand *)command;
 - (void) createPSTNCall:(CDVInvokedUrlCommand *)command;
 - (void) hangup:(CDVInvokedUrlCommand *)command;
 - (void) mute:(CDVInvokedUrlCommand *)command;

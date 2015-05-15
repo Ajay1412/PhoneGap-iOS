@@ -250,7 +250,7 @@
         [self setLocalVideoFrame:CGRectMake(xpos, ypos, width, height)];
     }];
 }
-- (void) hideLocalVideo {
+- (void) hideLocalVideo:(CDVInvokedUrlCommand *)command {
     [self removeLocalVideoView];
 }
 - (void) showRemoteVideo:(CDVInvokedUrlCommand *)command {
@@ -265,7 +265,7 @@
     }];
 }
 
-- (void) hideRemoteVideo {
+- (void) hideRemoteVideo:(CDVInvokedUrlCommand *)command {
     [self removeRemoteVideoView];
 }
 
