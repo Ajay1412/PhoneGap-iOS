@@ -108,9 +108,6 @@ var Kandy = {
     onCallStateChanged: function (args) {
     },
     onVideoStateChanged: function (args) {
-
-      alert('Arugment '+args);
-      alert('Arugment Result '+args.isReceivingVideo);
     },
     onAudioStateChanged: function (args) {
     },
@@ -123,8 +120,10 @@ var Kandy = {
 
     // Chat listeners
     onChatReceived: function (args) {
+      console.log("onChatReceived");
     },
     onChatDelivered: function (args) {
+      console.log("onChatDelivered");
     },
     onChatMediaAutoDownloadProgress: function (args) {
     },
@@ -785,6 +784,13 @@ var Kandy = {
             }, function (e) {
                 Kandy._callErrorFunction(element, "pull", e, Kandy._defaultErrorAction);
             });
+
+            Kandy.chat.startSchdulePullEvents(function (s) {
+                Kandy._callSuccessFunction(element, "pull", s, Kandy._defaultSuccessAction);
+            }, function (e) {
+                Kandy._callErrorFunction(element, "pull", e, Kandy._defaultErrorAction);
+            }, 0.01);
+
         }
     },
 
@@ -1355,7 +1361,29 @@ var Kandy = {
          */
         pullEvents: function (success, error) {
             exec(success, error, "KandyPlugin", "pullEvents", []);
+        },
+
+        /**
+         * Pull pending events from Kandy service.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         * @param milliseconds schedule pull events in milliseconds.
+         */
+        startSchdulePullEvents: function (success, error, milliseconds) {
+            exec(success, error, "KandyPlugin", "startSchedulePullEvents", [milliseconds]);
+        },
+
+        /**
+         * Pull pending events from Kandy service.
+         *
+         * @param success The success callback function.
+         * @param error The error callback function.
+         */
+         stopSchdulePullEvents: function (success, error) {
+            exec(success, error, "KandyPlugin", "stopSchedulePullEvents", []);
         }
+
     },
 
     // *** GROUP SERVICE ***//

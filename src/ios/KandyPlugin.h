@@ -74,6 +74,8 @@
 - (void) downloadMediaThumbnail:(CDVInvokedUrlCommand *)command;
 - (void) markAsReceived:(CDVInvokedUrlCommand *)command;
 - (void) pullEvents:(CDVInvokedUrlCommand *)command;
+- (void) startSchedulePullEvents:(CDVInvokedUrlCommand *)command;
+- (void) stopSchedulePullEvents:(CDVInvokedUrlCommand *)command;
 
 //Group
 - (void) createGroup:(CDVInvokedUrlCommand *)command;

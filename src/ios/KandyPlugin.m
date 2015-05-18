@@ -80,6 +80,9 @@
 @property (assign) BOOL hasNativeCallView;
 @property (assign) BOOL hasNativeAcknowledgement;
 
+//NSTimer object for schedule pull events
+@property (nonatomic) NSTimer *schedulePullEvent;
+
 @property (nonatomic) NSArray *connectionState;
 @property (nonatomic) NSArray *callState;
 @end
@@ -404,6 +407,23 @@
     [self.commandDelegate runInBackground:^{
         [self pullEvents];
     }];
+}
+
+- (void) startSchedulePullEvents:(CDVInvokedUrlCommand *)command {
+    NSArray *params = command.arguments;
+    [self validateInvokedUrlCommand:command withRequiredInputs:1];
+    [self.commandDelegate runInBackground:^{
+        __block float millisec = [[params objectAtIndex:0] floatValue];
+        [self stopSchedulePullEvents:nil];
+        [self getPullEventsByMillisec:millisec];
+    }];
+}
+
+- (void) stopSchedulePullEvents:(CDVInvokedUrlCommand *)command {
+    if ([self.schedulePullEvent isValid]) {
+        [self.schedulePullEvent invalidate];
+        self.schedulePullEvent = nil;
+    }
 }
 
 - (void) downloadMedia:(CDVInvokedUrlCommand *)command {
@@ -923,6 +943,18 @@
     [[Kandy sharedInstance].services.chat pullEventsWithResponseCallback:^(NSError *error) {
         [self didHandleResponse:error];
     }];
+}
+
+- (void) getPullEventsByMillisec:(float)millisec {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.schedulePullEvent = [NSTimer scheduledTimerWithTimeInterval:millisec
+                                             target:self
+                                           selector:@selector(pullEvents)
+                                           userInfo:nil
+                                            repeats:YES];
+        });
+    });
 }
 
 -(void)manualDownload:(id<KandyMessageProtocol>)kandyMessage{
