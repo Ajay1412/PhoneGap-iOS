@@ -78,6 +78,7 @@
 
 // The call dialog (native)
 @property (assign) BOOL hasNativeCallView;
+@property (assign) BOOL hasNativeAcknowledgement;
 
 @property (nonatomic) NSArray *connectionState;
 @property (nonatomic) NSArray *callState;
@@ -103,6 +104,7 @@
         [Kandy initializeSDKWithDomainKey:@"DAK525fffbaa0414f3f98a5dc482472006a" domainSecret:@"DASac5063f90ca64d22ac987e82e006733f"];
     }
     self.startVideoCall = YES;
+    self.hasNativeAcknowledgement = YES;
     
     self.connectionState = @[@"DISCONNECTING", @"DISCONNECTED", @"CONNECTING", @"CONNECTED"];
     self.callState = @[@"INITIAL", @"RINGING", @"DIALING", @"TALKING", @"TERMINATED", @"ON_DOUBLE_HOLD", @"REMOTELY_HELD", @"ON_HOLD"];
@@ -133,6 +135,7 @@
     if (config && [config count] > 0) {
         NSDictionary *configvariables = [config objectAtIndex:0];
         self.hasNativeCallView = [[configvariables objectForKey:@"hasNativeCallView"] boolValue];
+        self.hasNativeAcknowledgement = [[configvariables objectForKey:@"acknowledgeOnMsgRecieved"] boolValue];
     }
 }
 
@@ -384,6 +387,7 @@
 }
 
 - (void) markAsReceived:(CDVInvokedUrlCommand *)command {
+    
     NSArray *params = command.arguments;
     [self validateInvokedUrlCommand:command withRequiredInputs:1];
     [self.commandDelegate runInBackground:^{
@@ -393,7 +397,6 @@
         } else {
             [self ackEvents:[NSArray arrayWithObject:uuids]];
         }
-        
     }];
 }
 - (void) pullEvents:(CDVInvokedUrlCommand *)command {
@@ -1308,22 +1311,30 @@
 
 
 -(void)onMessageReceived:(id<KandyMessageProtocol>)kandyMessage recipientType:(EKandyRecordType)recipientType {
+    double epochTime = [@(floor([kandyMessage.timestamp timeIntervalSince1970])) longLongValue];
+    
     NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onChatReceived",@"action",
                              [NSDictionary dictionaryWithObjectsAndKeys:kandyMessage.uuid,@"UUID",
                              kandyMessage.sender.uri, @"sender",
                              kandyMessage.mediaItem.text , @"message",
-                             //kandyMessage.timestamp , @"timestamp",
+                             [NSNumber numberWithDouble:epochTime], @"timestamp",
                              @(recipientType),@"type", nil], @"data",
                              nil];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
     
+    if (self.hasNativeAcknowledgement) {
+        [kandyMessage markAsReceivedWithResponseCallback:^(NSError *error) {
+        }];
+    }
 }
 -(void)onMessageDelivered:(KandyDeliveryAck *)ackData {
 
+    double epochTime = [@(floor([ackData.timestamp timeIntervalSince1970])) longLongValue];
+
     NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onChatDelivered",@"action",
-                             [NSDictionary dictionaryWithObjectsAndKeys:ackData.uuid,@"UUID",nil], @"data", nil];
+                             [NSDictionary dictionaryWithObjectsAndKeys:ackData.uuid,@"UUID", [NSNumber numberWithDouble:epochTime], @"timestamp",nil], @"data", nil];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
 }
 
