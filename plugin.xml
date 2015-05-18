@@ -32,6 +32,7 @@
 
     <preference name="API_KEY"/>
     <preference name="API_SECRET"/>
+    <preference name="exit-on-suspend" value="true" />
 
     <js-module src="www/kandy.js" name="KandyPlugin">
         <clobbers target="Kandy"/>
