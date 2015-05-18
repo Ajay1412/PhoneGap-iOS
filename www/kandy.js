@@ -1363,8 +1363,8 @@ var Kandy = {
          * @param error The error callback function.
          * @param milliseconds schedule pull events in milliseconds.
          */
-        startSchdulePullEvents: function (success, error, milliseconds) {
-            exec(success, error, "KandyPlugin", "startSchedulePullEvents", [milliseconds]);
+        startSchedulePullEvents: function (success, error, seconds) {
+            exec(success, error, "KandyPlugin", "startSchedulePullEvents", [seconds]);
         },
 
         /**
@@ -1373,7 +1373,7 @@ var Kandy = {
          * @param success The success callback function.
          * @param error The error callback function.
          */
-         stopSchdulePullEvents: function (success, error) {
+         stopSchedulePullEvents: function (success, error) {
             exec(success, error, "KandyPlugin", "stopSchedulePullEvents", []);
         }
 

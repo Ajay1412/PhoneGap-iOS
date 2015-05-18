@@ -413,9 +413,9 @@
     NSArray *params = command.arguments;
     [self validateInvokedUrlCommand:command withRequiredInputs:1];
     [self.commandDelegate runInBackground:^{
-        __block float millisec = [[params objectAtIndex:0] floatValue];
+        __block float seconds = [[params objectAtIndex:0] floatValue];
         [self stopSchedulePullEvents:nil];
-        [self getPullEventsByMillisec:millisec];
+        [self getPullEventsBySeconds:seconds];
     }];
 }
 
@@ -945,10 +945,10 @@
     }];
 }
 
-- (void) getPullEventsByMillisec:(float)millisec {
+- (void) getPullEventsBySeconds:(float)seconds {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         dispatch_async(dispatch_get_main_queue(), ^{
-            self.schedulePullEvent = [NSTimer scheduledTimerWithTimeInterval:millisec
+            self.schedulePullEvent = [NSTimer scheduledTimerWithTimeInterval:seconds
                                              target:self
                                            selector:@selector(pullEvents)
                                            userInfo:nil
