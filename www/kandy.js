@@ -784,13 +784,6 @@ var Kandy = {
             }, function (e) {
                 Kandy._callErrorFunction(element, "pull", e, Kandy._defaultErrorAction);
             });
-
-            Kandy.chat.startSchdulePullEvents(function (s) {
-                Kandy._callSuccessFunction(element, "pull", s, Kandy._defaultSuccessAction);
-            }, function (e) {
-                Kandy._callErrorFunction(element, "pull", e, Kandy._defaultErrorAction);
-            }, 0.01);
-
         }
     },
 
