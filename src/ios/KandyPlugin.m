@@ -1313,21 +1313,17 @@
                              [NSDictionary dictionaryWithObjectsAndKeys:kandyMessage.uuid,@"UUID",
                              kandyMessage.sender.uri, @"sender",
                              kandyMessage.mediaItem.text , @"message",
-                             kandyMessage.timestamp , @"timestamp",
+                             //kandyMessage.timestamp , @"timestamp",
                              @(recipientType),@"type", nil], @"data",
                              nil];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
     
 }
 -(void)onMessageDelivered:(KandyDeliveryAck *)ackData {
-    /*NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
-                             @"onChatDelivered",@"action",
-                             [NSDictionary dictionaryWithObjectsAndKeys:ackData.uuid,@"UUID",
-                             ackData.timestamp , @"timestamp",nil], @"data",
-                             nil];*/
-    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
-                             @"onChatDelivered",@"action",nil];
 
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
+                             @"onChatDelivered",@"action",
+                             [NSDictionary dictionaryWithObjectsAndKeys:ackData.uuid,@"UUID",nil], @"data", nil];
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
 }
 
