@@ -398,7 +398,9 @@
 }
 - (void) pullEvents:(CDVInvokedUrlCommand *)command {
     self.callbackID = command.callbackId;
-    [self pullEvents];
+    [self.commandDelegate runInBackground:^{
+        [self pullEvents];
+    }];
 }
 
 - (void) downloadMedia:(CDVInvokedUrlCommand *)command {
@@ -1318,11 +1320,14 @@
     
 }
 -(void)onMessageDelivered:(KandyDeliveryAck *)ackData {
-    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
+    /*NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
                              @"onChatDelivered",@"action",
                              [NSDictionary dictionaryWithObjectsAndKeys:ackData.uuid,@"UUID",
                              ackData.timestamp , @"timestamp",nil], @"data",
-                             nil];
+                             nil];*/
+    NSDictionary *jsonObj = [NSDictionary dictionaryWithObjectsAndKeys:
+                             @"onChatDelivered",@"action",nil];
+
     [self notifySuccessResponse:jsonObj withCallbackID:self.kandyChatServiceNotificationCallback];
 }
 
