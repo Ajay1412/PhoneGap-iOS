@@ -30,7 +30,7 @@
     <repo>https://github.com/Kandy-IO/PhoneGap-iOS.git</repo>
     <issue>https://github.com/Kandy-IO/PhoneGap-iOS/issues</issue>
 
-    <preference name="EXIT-ON-SUSPEND" value="true" />
+    <!-- <preference name="EXIT-ON-SUSPEND" value="true" /> -->
 
     <js-module src="www/kandy.js" name="KandyPlugin">
         <clobbers target="Kandy"/>
