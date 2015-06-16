@@ -8,44 +8,58 @@
     <meta name="viewport"
           content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi"/>
     <link rel="stylesheet" href="css/materialize.min.css">
-    <title>Access | Kandy PhoneGap Demos</title>
+    <title>Push | Kandy PhoneGap Demos</title>
+    <style>
+        .btn-block {
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
 
 <nav>
     <div class="nav-wrapper">
-        <a href="#!" class="brand-logo">Access</a>
+        <a href="#!" class="brand-logo">Push</a>
         <a href="#" data-activates="mobile-nav" class="button-collapse"><i class="mdi-navigation-menu"></i></a>
         <ul class="right hide-on-med-and-down">
             <li><a href="provisioning.html">Provisioning</a></li>
-            <li class="active"><a href="index.html">Access</a></li>
+            <li><a href="index.html">Access</a></li>
             <li><a href="call.html">Call</a></li>
             <li><a href="chat.html">Chat</a></li>
             <li><a href="group.html">Group</a></li>
             <li><a href="presence.html">Presence</a></li>
             <li><a href="location.html">Location</a></li>
             <li><a href="address-book.html">Address book</a></li>
-            <li><a href="push.html">Push</a></li>
+            <li class="active"><a href="push.html">Push</a></li>
             <li class="divider"></li>
             <li><a href="settings.html">Settings</a></li>
         </ul>
         <ul class="side-nav" id="mobile-nav">
             <li><a href="provisioning.html">Provisioning</a></li>
-            <li class="active"><a href="index.html">Access</a></li>
+            <li><a href="index.html">Access</a></li>
             <li><a href="call.html">Call</a></li>
             <li><a href="chat.html">Chat</a></li>
             <li><a href="group.html">Group</a></li>
             <li><a href="presence.html">Presence</a></li>
             <li><a href="location.html">Location</a></li>
             <li><a href="address-book.html">Address book</a></li>
-            <li><a href="push.html">Push</a></li>
+            <li class="active"><a href="push.html">Push</a></li>
             <li class="divider"></li>
             <li><a href="settings.html">Settings</a></li>
         </ul>
     </div>
 </nav>
 
-<kandy widget="access"></kandy>
+<div class="container center">
+    <p>Push Service State: <span id="pushState">Undefined</span></p>
+
+    <div class="row">
+        <button onclick="pushEnable()" class="btn btn-large btn-block">Enable</button>
+    </div>
+    <div class="row">
+        <button onclick="pushDisable()" class="btn btn-large btn-block red">Disable</button>
+    </div>
+</div>
 
 <script src="js/jquery-1.8.2.min.js"></script>
 <script src="js/materialize.min.js"></script>
@@ -53,12 +67,7 @@
 <script type="text/javascript" src="js/kandy.js"></script>
 <script type="text/javascript" src="js/main.js"></script>
 <script type="text/javascript">
-    var loginRequired = false;
     app.initialize();
-
-    document.addEventListener('deviceready', function () {
-        Kandy.setKey("DAK525fffbaa0414f3f98a5dc482472006a", "DASac5063f90ca64d22ac987e82e006733f");
-    }, false);
 </script>
 </body>
 </html>

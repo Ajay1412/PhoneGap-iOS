@@ -14,10 +14,12 @@
 //configurations
 - (void) configurations:(CDVInvokedUrlCommand *)command;
 - (void) makeToast:(CDVInvokedUrlCommand *)command;
+- (void) setKey:(CDVInvokedUrlCommand *)command;
 
 //Callback set-up
 - (void) connectServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
 - (void) callServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
+- (void) callServiceNotificationPluginCallback:(CDVInvokedUrlCommand *)command;
 - (void) addressBookServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
 - (void) chatServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
 - (void) groupServiceNotificationCallback:(CDVInvokedUrlCommand *)command;
@@ -57,21 +59,21 @@
 //Chat
 - (void) sendChat:(CDVInvokedUrlCommand *)command;
 - (void) sendSMS:(CDVInvokedUrlCommand *)command;
+- (void) openAttachment:(CDVInvokedUrlCommand *)command;
+- (void) sendAttachment:(CDVInvokedUrlCommand *)command;
 - (void) pickAudio:(CDVInvokedUrlCommand *)command;
 - (void) sendAudio:(CDVInvokedUrlCommand *)command;
 - (void) pickVideo:(CDVInvokedUrlCommand *)command;
 - (void) sendVideo:(CDVInvokedUrlCommand *)command;
 - (void) pickImage:(CDVInvokedUrlCommand *)command;
 - (void) sendImage:(CDVInvokedUrlCommand *)command;
-- (void) pickFile:(CDVInvokedUrlCommand *)command;
-- (void) sendFile:(CDVInvokedUrlCommand *)command;
 - (void) pickContact:(CDVInvokedUrlCommand *)command;
 - (void) sendContact:(CDVInvokedUrlCommand *)command;
 - (void) sendCurrentLocation:(CDVInvokedUrlCommand *)command;
 - (void) sendLocation:(CDVInvokedUrlCommand *)command;
-- (void) cancelMediaTransfer:(CDVInvokedUrlCommand *)command;
 - (void) downloadMedia:(CDVInvokedUrlCommand *)command;
-- (void) downloadMediaThumbnail:(CDVInvokedUrlCommand *)command;
+//- (void) cancelMediaTransfer:(CDVInvokedUrlCommand *)command;
+//- (void) downloadMediaThumbnail:(CDVInvokedUrlCommand *)command;
 - (void) markAsReceived:(CDVInvokedUrlCommand *)command;
 - (void) pullEvents:(CDVInvokedUrlCommand *)command;
 - (void) startSchedulePullEvents:(CDVInvokedUrlCommand *)command;
@@ -103,8 +105,8 @@
 - (void) getCurrentLocation:(CDVInvokedUrlCommand *)command;
 
 //Push
-- (void) pushEnable:(CDVInvokedUrlCommand *)command;
-- (void) pushDisable:(CDVInvokedUrlCommand *)command;
+- (void) enable:(CDVInvokedUrlCommand *)command;
+- (void) disable:(CDVInvokedUrlCommand *)command;
 
 //AddressBook
 - (void) getDeviceContacts:(CDVInvokedUrlCommand *)command;

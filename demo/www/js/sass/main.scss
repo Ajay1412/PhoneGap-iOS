@@ -1,0 +1,19 @@
+@charset "UTF-8";
+
+// Mixins
+@import "_components/prefixer";
+@import "_components/mixins";
+@import "_components/color";
+
+// Variables;
+@import "_components/variables";
+
+// components
+kandy {
+  @import "_components/global";
+  @import "_components/buttons";
+  @import "_components/form";
+  @import "_components/grid";
+  @import "_components/modal";
+  @import "_components/themed";
+}

@@ -19,35 +19,19 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedEvent: function (id) {
-        // Initialize Kandy plugin
+        $(".button-collapse").sideNav();
 
-        var config = {"hasNativeCallView": true };
+        Kandy.initialize();
 
-        Kandy.initialize(config);
-        Kandy.onChatReceived = function (args) {
-            refreshUI();
+        if (typeof loginRequired === 'undefined' || loginRequired == true) {
+            Kandy.access.getConnectionState(function (state) {
+                if (state != Kandy.ConnectionState.CONNECTED) {
+                    window.open("index.html");
+                }
+            })
         }
-
-        /** Check login state **/
-        var pages = ["call", "chat", "group", "presence", "location", "push", "address-book"];
-
-        for (var i = 0; i < pages.length; ++i)
-            $(document).on("pagebeforeshow", "#" + pages[i], function () {
-                Kandy.access.getConnectionState(function (state) {
-                    if (state != Kandy.ConnectionState.CONNECTED) {
-                        $.mobile.changePage("#access");
-                    }
-                })
-            });
     }
 };
-
-/**
- * Jquery mobile renderer redraw.
- */
-function refreshUI() {
-    $(".ui-mobile").trigger('create');
-}
 
 /**
  * Enable push notification.
@@ -148,4 +132,26 @@ function getDomainContacts() {
     }, function (e) {
         alert(e);
     });
+}
+
+function updateConfigs() {
+    var apiKey = $("#apiKey").val();
+    var apiSecret = $("#apiSecret").val();
+    var hostUrl = $("#hostUrl").val();
+    Kandy.setKey(apiKey, apiSecret);
+    Kandy.setHostUrl(hostUrl);
+    alert("Updated successfully");
+}
+
+function refreshConfigs() {
+    Kandy.getSession(function (data) {
+        $("#apiKey").val(data.domain.apiKey);
+        $("#apiSecret").val(data.domain.apiSecret);
+    });
+    Kandy.getHostUrl(function (url) {
+        $("#hostUrl").val(url);
+    });
+    Kandy.getReport(function (report) {
+        $("#configsReport").html('<pre>' + report + '</pre>');
+    })
 }

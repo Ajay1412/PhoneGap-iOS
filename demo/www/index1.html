@@ -1,0 +1,235 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="format-detection" content="telephone=no"/>
+    <meta name="msapplication-tap-highlight" content="no"/>
+    <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
+    <meta name="viewport"
+          content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi"/>
+    <link rel="stylesheet" href="themes/Bootstrap.css">
+    <link rel="stylesheet" href="css/jquery.mobile.structure-1.4.0.min.css"/>
+    <link rel="stylesheet" href="themes/jquery.mobile.icons.min.css"/>
+    <script src="js/jquery-1.8.2.min.js"></script>
+    <script src="js/jquery.mobile-1.4.0.min.js"></script>
+    <title>Kandy PhoneGap Demo</title>
+</head>
+<body>
+<!-- Index -->
+<div data-role="page" data-theme="a" id="index">
+    <div data-role="header" data-position="inline">
+        <h1>Kandy PhoneGap Demo</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <button>Hangup</button>
+        <button data-inline="true">Hold</button>
+        <button data-inline="true">Video</button>
+        <button data-inline="true">Switch camera</button>
+        <!--<a href="#provisioning" data-role="button" data-icon="star">Provisioning</a>
+        <a href="#access" data-role="button" data-icon="lock">Access</a>
+        <a href="#call" data-role="button" data-icon="phone">Call</a>
+        <a href="#chat" data-role="button" data-icon="comment">Chat</a>
+        &lt;!&ndash;<a href="#sms" data-role="button" data-icon="mail">SMS</a>&ndash;&gt;
+        <a href="#group" data-role="button" data-icon="bars">Groups</a>
+        <a href="#presence" data-role="button" data-icon="eye">Presence</a>
+        <a href="#location" data-role="button" data-icon="location">Location</a>
+        <a href="#push" data-role="button" data-icon="plus">Push</a>
+        <a href="#address-book" data-role="button" data-icon="bullets">Address book</a>-->
+    </div>
+</div>
+<!-- Provisioning -->
+<div data-role="page" data-theme="a" id="provisioning">
+    <div data-role="header" data-position="inline">
+        <a data-role="button" data-theme="a" href="#index" data-icon="home" data-iconpos="left"
+           class="ui-btn-left">Home</a>
+
+        <h1>Provisioning</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <kandy widget="provisioning" country-code="VN"></kandy>
+    </div>
+</div>
+<!-- Access -->
+<div data-role="page" data-theme="a" id="access">
+    <div data-role="header" data-position="inline">
+        <a data-role="button" data-theme="a" href="#index" data-icon="home" data-iconpos="left"
+           class="ui-btn-left">Home</a>
+
+        <h1>Access</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <kandy widget="access" login-success="refreshUI" logout-success="refreshUI"></kandy>
+    </div>
+</div>
+<!-- Call -->
+<div data-role="page" data-theme="a" id="call">
+    <div data-role="header" data-position="inline">
+        <a data-role="button" data-theme="a" href="#index" data-icon="home" data-iconpos="left"
+           class="ui-btn-left">Home</a>
+
+        <h1>Call</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <!--<kandy widget="call"></kandy>
+        <kandy widget="call" type="pstn"></kandy>
+        <kandy widget="call" type="pstn" call-to="+1-408-475-0472" label="Call K"></kandy>-->
+    </div>
+</div>
+<!-- Chat -->
+<div data-role="page" data-theme="a" id="chat">
+    <div data-role="header" data-position="fixed">
+        <a data-role="button" data-theme="a" href="#index" data-icon="home" data-iconpos="left"
+           class="ui-btn-left">Home</a>
+
+        <h1>Chat</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <kandy widget="chat" pull-success="refreshUI"></kandy>
+    </div>
+</div>
+<!-- SMS -->
+<div data-role="page" data-theme="a" id="sms">
+    <div data-role="header" data-position="fixed">
+        <a data-role="button" data-theme="a" href="#index" data-icon="home" data-iconpos="left"
+           class="ui-btn-left">Home</a>
+
+        <h1>SMS</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+    </div>
+</div>
+<!-- Group -->
+<div data-role="page" data-theme="a" id="group">
+    <div data-role="header" data-position="fixed">
+        <a data-role="button" data-theme="a" href="#index" data-icon="home" data-iconpos="left"
+           class="ui-btn-left">Home</a>
+
+        <h1>Group</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <button onclick="getGroups()">Get groups</button>
+        <button onclick="createGroup()">Create groups</button>
+        <br/>
+
+        <div id="kandy-groups">
+        </div>
+    </div>
+</div>
+<div data-role="page" data-theme="a" id="group-detail">
+    <div data-role="header" data-position="fixed">
+        <a data-role="button" data-theme="a" href="#group" data-icon="bars" data-iconpos="left" class="ui-btn-left">Groups</a>
+
+        <h1>Group Detail</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <input type="hidden" id="group-id"/>
+        <img id="group-img" src="" alt="group-thumbnail" width="100%" height="150px" style="display: none">
+        <button onclick="chatRoom()">Chat room</button>
+        <div data-role="controlgroup" data-type="horizontal" align="center">
+            <button onclick="addParticipant()">Add participant</button>
+            <button onclick="removeParticipant()">Remove participant</button>
+        </div>
+        <div data-role="controlgroup" data-type="horizontal" align="center">
+            <button onclick="muteParticipant()">Mute participant</button>
+            <button onclick="unmuteParticipant()">Unmute participant</button>
+        </div>
+        <div data-role="controlgroup" data-type="horizontal" align="center">
+            <button onclick="leaveGroup()">Leave</button>
+            <button onclick="renameGroup()">Rename</button>
+            <button onclick="deleteGroup()">Delete</button>
+            <button onclick="muteGroup()" id="group-mute-state" state="0">Mute</button>
+        </div>
+        <div data-role="controlgroup" data-type="horizontal" align="center">
+            <button onclick="changeGroupImage()">Change image</button>
+            <button onclick="removeGroupImage()">Remove image</button>
+        </div>
+        <br/>
+
+        <h4><b>Participants:</b></h4>
+
+        <div id="group-participants">
+        </div>
+    </div>
+</div>
+<div data-role="page" data-theme="a" id="group-chat-room">
+    <div data-role="header" data-position="fixed">
+        <a data-role="button" data-theme="a" href="#group" data-icon="bars" data-iconpos="left" class="ui-btn-left">Groups</a>
+
+        <h1>Group Chat Room</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <kandy widget="chat" type="CHAT" send-to="groupId@domain.com" id="kandy-group-chat-room"></kandy>
+    </div>
+</div>
+<!-- Presence -->
+<div data-role="page" data-theme="a" id="presence">
+    <div data-role="header" data-position="inline">
+        <a data-role="button" data-theme="a" href="#index" data-icon="home" data-iconpos="left"
+           class="ui-btn-left">Home</a>
+
+        <h1>Presence</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <p>Wath for: <span id="usersWatched">none</span></p>
+
+        <p>Onlines: <span id="usersOnline">none</span></p>
+
+        <p>Offlines: <span id="usersOffline">none</span></p>
+        <input type="text" id="usersIdWatched" placeholder="recipientID@domain.com"/>
+        <button data-theme="d" onclick="startWatch()">Watch</button>
+    </div>
+</div>
+<!-- Location -->
+<div data-role="page" data-theme="a" id="location">
+    <div data-role="header" data-position="inline">
+        <a data-role="button" data-theme="a" href="#index" data-icon="home" data-iconpos="left"
+           class="ui-btn-left">Home</a>
+
+        <h1>Location</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <p>Two letter country code: <span id="countryCode">none</span></p>
+
+        <p>Country long name: <span id="countryNameLong">none</span></p>
+
+        <p>Country short name: <span id="countryNameShort">none</span></p>
+        <button onclick="getCountryInfo()" data-theme="d">Get code</button>
+        <button onclick="getCurrentLocation()" data-theme="d">Get current location</button>
+        <div id="currentLocationInfo"></div>
+    </div>
+</div>
+<!-- Push -->
+<div data-role="page" data-theme="a" id="push">
+    <div data-role="header" data-position="inline">
+        <a data-role="button" data-theme="a" href="#index" data-icon="home" data-iconpos="left"
+           class="ui-btn-left">Home</a>
+
+        <h1>Push</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <p>Push Service State: <span id="pushState">Undefined</span></p>
+        <button onclick="pushEnable()" data-theme="d">Enable Push Service</button>
+        <button onclick="pushDisable()" data-theme="c">Disable Push Service</button>
+    </div>
+</div>
+<!-- Address book -->
+<div data-role="page" data-theme="a" id="address-book">
+    <div data-role="header" data-position="inline">
+        <a data-role="button" data-theme="a" href="#index" data-icon="home" data-iconpos="left"
+           class="ui-btn-left">Home</a>
+
+        <h1>Address book</h1>
+    </div>
+    <div data-role="content" data-theme="a">
+        <button onclick="getDeviceContacts()">getDeviceContacts</button>
+        <button onclick="getDomainContacts()">getDomainContacts</button>
+        <div id="addressBooks"></div>
+    </div>
+</div>
+<script type="text/javascript" src="cordova.js"></script>
+<script type="text/javascript" src="js/index.js"></script>
+<script type="text/javascript">
+    app.initialize();
+</script>
+</body>
+</html>
